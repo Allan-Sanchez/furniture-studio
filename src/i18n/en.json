@@ -1,0 +1,148 @@
+{
+  "app": {
+    "name": "Furniture Studio",
+    "tagline": "Parametric furniture design"
+  },
+  "nav": {
+    "project": "Project",
+    "furniture": "Furniture",
+    "params": "Parameters",
+    "modules": "Modules",
+    "materials": "Materials"
+  },
+  "actions": {
+    "save": "Save",
+    "export": "Export",
+    "new": "New",
+    "load": "Load",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "add": "Add",
+    "apply_all": "Apply to all"
+  },
+  "project": {
+    "title": "Project",
+    "name_label": "Project name",
+    "name_placeholder": "My project",
+    "currency_label": "Currency",
+    "margin_label": "Profit margin (%)",
+    "furniture_list": "Project furniture",
+    "add_furniture": "Add furniture",
+    "no_furniture": "No furniture yet. Add one to get started."
+  },
+  "furniture": {
+    "types": {
+      "wardrobe": "Wardrobe / Closet",
+      "kitchen_base": "Kitchen Base Cabinet",
+      "kitchen_wall": "Kitchen Wall Cabinet"
+    },
+    "presets": "Presets",
+    "select_type": "Select furniture type"
+  },
+  "params": {
+    "total_width": "Total width",
+    "total_height": "Total height",
+    "total_depth": "Total depth",
+    "board_thickness": "Board thickness",
+    "back_panel_thickness": "Back panel thickness",
+    "has_back": "With back panel",
+    "has_socle": "With socle",
+    "socle_height": "Socle height",
+    "door_type": "Door type",
+    "door_types": {
+      "none": "No door",
+      "hinged": "Hinged",
+      "sliding": "Sliding"
+    },
+    "mm": "mm"
+  },
+  "modules": {
+    "title": "Internal modules",
+    "add": "Add module",
+    "available_space": "Available space",
+    "used_space": "Used space",
+    "types": {
+      "shelf": "Shelf",
+      "drawer": "Drawer",
+      "hinged_door": "Hinged door",
+      "sliding_door": "Sliding door",
+      "hanging_rail": "Hanging rail",
+      "vertical_divider": "Vertical divider",
+      "socle": "Socle"
+    }
+  },
+  "materials": {
+    "title": "Materials",
+    "by_piece": "By piece",
+    "apply_all": "Apply to all pieces",
+    "price_sqm": "Price / m²",
+    "types": {
+      "mdf": "MDF",
+      "melamine": "Melamine / Chipboard",
+      "solid_wood": "Solid wood",
+      "plywood": "Plywood",
+      "hdf": "HDF"
+    }
+  },
+  "bom": {
+    "title": "Bill of Materials",
+    "consolidated": "Consolidated",
+    "by_furniture": "By furniture",
+    "piece": "Part",
+    "qty": "Qty.",
+    "length": "Length",
+    "width": "Width",
+    "thickness": "Thickness",
+    "material": "Material",
+    "finish": "Finish",
+    "unit_price": "Unit price",
+    "subtotal": "Subtotal",
+    "hardware_section": "Hardware",
+    "no_data": "No data. Configure a furniture item first."
+  },
+  "cutlist": {
+    "title": "Cut List",
+    "label": "Label",
+    "piece": "Part",
+    "length": "Length",
+    "width": "Width",
+    "thickness": "Thk.",
+    "qty": "Qty.",
+    "material": "Material",
+    "sheets_needed": "Sheets needed",
+    "sheet_size": "Standard sheet 2440 × 1220 mm"
+  },
+  "cost": {
+    "title": "Quote",
+    "materials_cost": "Materials cost",
+    "hardware_cost": "Hardware cost",
+    "subtotal": "Subtotal",
+    "margin": "Margin",
+    "sale_price": "Suggested sale price",
+    "export_pdf": "Export PDF"
+  },
+  "scene": {
+    "front": "Front",
+    "side": "Side",
+    "top": "Top",
+    "perspective": "Perspective",
+    "center": "Center",
+    "doors_open": "Doors open",
+    "doors_closed": "Doors closed",
+    "unit": "mm"
+  },
+  "validation": {
+    "required": "This field is required",
+    "min": "Minimum value is {{min}} mm",
+    "max": "Maximum value is {{max}} mm",
+    "modules_exceed": "Modules exceed available interior space",
+    "invalid_number": "Enter a valid number"
+  },
+  "errors": {
+    "export_blocked": "Fix errors before exporting",
+    "save_no_name": "Project needs a name",
+    "load_failed": "Could not load project"
+  }
+}

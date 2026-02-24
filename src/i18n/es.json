@@ -1,0 +1,148 @@
+{
+  "app": {
+    "name": "Furniture Studio",
+    "tagline": "Diseño paramétrico de muebles"
+  },
+  "nav": {
+    "project": "Proyecto",
+    "furniture": "Muebles",
+    "params": "Parámetros",
+    "modules": "Módulos",
+    "materials": "Materiales"
+  },
+  "actions": {
+    "save": "Guardar",
+    "export": "Exportar",
+    "new": "Nuevo",
+    "load": "Cargar",
+    "delete": "Eliminar",
+    "duplicate": "Duplicar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "add": "Agregar",
+    "apply_all": "Aplicar a todas"
+  },
+  "project": {
+    "title": "Proyecto",
+    "name_label": "Nombre del proyecto",
+    "name_placeholder": "Mi proyecto",
+    "currency_label": "Moneda",
+    "margin_label": "Margen de ganancia (%)",
+    "furniture_list": "Muebles del proyecto",
+    "add_furniture": "Agregar mueble",
+    "no_furniture": "Aún no hay muebles. Agrega uno para comenzar."
+  },
+  "furniture": {
+    "types": {
+      "wardrobe": "Ropero / Closet",
+      "kitchen_base": "Gabinete Bajo de Cocina",
+      "kitchen_wall": "Gabinete Alto de Cocina"
+    },
+    "presets": "Presets",
+    "select_type": "Seleccionar tipo de mueble"
+  },
+  "params": {
+    "total_width": "Ancho total",
+    "total_height": "Alto total",
+    "total_depth": "Profundidad total",
+    "board_thickness": "Espesor de tablero",
+    "back_panel_thickness": "Espesor del fondo",
+    "has_back": "Con fondo",
+    "has_socle": "Con zócalo",
+    "socle_height": "Altura del zócalo",
+    "door_type": "Tipo de puerta",
+    "door_types": {
+      "none": "Sin puerta",
+      "hinged": "Abatible",
+      "sliding": "Corrediza"
+    },
+    "mm": "mm"
+  },
+  "modules": {
+    "title": "Módulos internos",
+    "add": "Agregar módulo",
+    "available_space": "Espacio disponible",
+    "used_space": "Espacio usado",
+    "types": {
+      "shelf": "Estante",
+      "drawer": "Cajón",
+      "hinged_door": "Puerta abatible",
+      "sliding_door": "Puerta corrediza",
+      "hanging_rail": "Barra colgadora",
+      "vertical_divider": "Divisor vertical",
+      "socle": "Zócalo"
+    }
+  },
+  "materials": {
+    "title": "Materiales",
+    "by_piece": "Por pieza",
+    "apply_all": "Aplicar a todas las piezas",
+    "price_sqm": "Precio / m²",
+    "types": {
+      "mdf": "MDF",
+      "melamine": "Melamina / Aglomerado",
+      "solid_wood": "Madera maciza",
+      "plywood": "Plywood / Triplay",
+      "hdf": "HDF"
+    }
+  },
+  "bom": {
+    "title": "Lista de materiales",
+    "consolidated": "Consolidada",
+    "by_furniture": "Por mueble",
+    "piece": "Pieza",
+    "qty": "Cant.",
+    "length": "Largo",
+    "width": "Ancho",
+    "thickness": "Espesor",
+    "material": "Material",
+    "finish": "Acabado",
+    "unit_price": "P. Unit.",
+    "subtotal": "Subtotal",
+    "hardware_section": "Herrajes",
+    "no_data": "Sin datos. Configura un mueble primero."
+  },
+  "cutlist": {
+    "title": "Lista de cortes",
+    "label": "Etiqueta",
+    "piece": "Pieza",
+    "length": "Largo",
+    "width": "Ancho",
+    "thickness": "Esp.",
+    "qty": "Cant.",
+    "material": "Material",
+    "sheets_needed": "Tableros necesarios",
+    "sheet_size": "Tablero estándar 2440 × 1220 mm"
+  },
+  "cost": {
+    "title": "Cotización",
+    "materials_cost": "Costo materiales",
+    "hardware_cost": "Costo herrajes",
+    "subtotal": "Subtotal",
+    "margin": "Margen",
+    "sale_price": "Precio de venta sugerido",
+    "export_pdf": "Exportar PDF"
+  },
+  "scene": {
+    "front": "Frontal",
+    "side": "Lateral",
+    "top": "Superior",
+    "perspective": "Perspectiva",
+    "center": "Centrar",
+    "doors_open": "Puertas abiertas",
+    "doors_closed": "Puertas cerradas",
+    "unit": "mm"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "min": "El valor mínimo es {{min}} mm",
+    "max": "El valor máximo es {{max}} mm",
+    "modules_exceed": "Los módulos exceden el espacio interior disponible",
+    "invalid_number": "Ingresa un número válido"
+  },
+  "errors": {
+    "export_blocked": "Corrige los errores antes de exportar",
+    "save_no_name": "El proyecto necesita un nombre",
+    "load_failed": "No se pudo cargar el proyecto"
+  }
+}

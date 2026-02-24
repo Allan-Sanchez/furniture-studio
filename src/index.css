@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    @apply h-full w-full overflow-hidden;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  * {
+    @apply box-border;
+  }
+
+  /* Scrollbar delgada para paneles */
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-300 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-300/80;
+  }
+}
+
+@layer components {
+  /* Divisor arrastrable entre visor y panel inferior */
+  .resizer {
+    @apply h-1 w-full cursor-row-resize bg-surface-200 hover:bg-primary-300 transition-colors;
+  }
+
+  /* Botones de icono en los overlays del visor 3D */
+  .scene-btn {
+    @apply flex items-center justify-center h-7 px-2.5 rounded text-xs font-medium
+           bg-white/90 text-slate-700 border border-white/60
+           hover:bg-white hover:text-slate-900
+           shadow-sm backdrop-blur-sm transition-all;
+  }
+
+  .scene-btn.active {
+    @apply bg-primary-500 text-white border-primary-500;
+  }
+
+  /* Tabs del panel izquierdo */
+  .panel-tab {
+    @apply flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md
+           text-slate-600 hover:bg-surface-100 hover:text-slate-900
+           transition-colors cursor-pointer select-none;
+  }
+
+  .panel-tab.active {
+    @apply bg-primary-50 text-primary-700;
+  }
+
+  /* Inputs del sistema */
+  .fs-input {
+    @apply w-full px-3 py-1.5 text-sm rounded-md border border-surface-200
+           bg-white text-slate-900 placeholder-slate-400
+           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
+           transition;
+  }
+
+  .fs-input.error {
+    @apply border-red-400 focus:ring-red-400;
+  }
+
+  /* Botón primario */
+  .btn-primary {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium
+           bg-primary-600 text-white
+           hover:bg-primary-700 active:bg-primary-800
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors;
+  }
+
+  /* Botón secundario */
+  .btn-secondary {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium
+           bg-white text-slate-700 border border-surface-200
+           hover:bg-surface-50 active:bg-surface-100
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors;
+  }
+
+  /* Botón ghost/peligro */
+  .btn-danger {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium
+           text-red-600 hover:bg-red-50 active:bg-red-100
+           transition-colors;
+  }
+}
