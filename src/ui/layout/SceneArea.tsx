@@ -1,9 +1,12 @@
-import { Suspense, useRef, useCallback } from 'react'
+import { Suspense, useRef, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Scene from '@/scene/Scene'
-import type { CenterCameraFn } from '@/scene/Scene'
+import type { CenterCameraFn, SetCameraPresetFn, CameraPreset } from '@/scene/Scene'
 import { useProjectStore } from '@/store/projectStore'
 import { useUIStore } from '@/store/uiStore'
+import { exportProjectGLB, exportFurnitureGLB } from '@/services/exportGLB'
+import type { Furniture } from '@/engine/types'
+import type { Project } from '@/engine/types'
 
 interface SceneAreaProps {
   bottomHeight?: number
@@ -12,15 +15,52 @@ interface SceneAreaProps {
 export default function SceneArea(_props: SceneAreaProps) {
   const { t } = useTranslation()
   const { activeProject, activeFurnitureId } = useProjectStore()
-  const { showDoors, toggleDoors } = useUIStore()
+  const { showDoors, toggleDoors, cameraView, setCameraView } = useUIStore()
   const project = activeProject()
 
-  // Referencia a la función de centrado expuesta por Scene
+  // ── Estado local: modo explosionado ───────────────────────
+  const [explodedMode, setExplodedMode] = useState(false)
+  const toggleExploded = useCallback(() => setExplodedMode(m => !m), [])
+
+  // ── Estado local: exportando GLB ──────────────────────────
+  const [isExporting, setIsExporting] = useState(false)
+
+  const handleExportGLB = useCallback(async () => {
+    if (isExporting) return
+    setIsExporting(true)
+    try {
+      const activeFurniture = project?.furnitures.find(
+        (f: Furniture) => f.id === activeFurnitureId,
+      )
+      if (activeFurniture?.result) {
+        await exportFurnitureGLB(activeFurniture)
+      } else if (project) {
+        await exportProjectGLB(project as Project)
+      }
+    } catch (err) {
+      console.error('[SceneArea] Error exportando GLB:', err)
+    } finally {
+      setIsExporting(false)
+    }
+  }, [isExporting, project, activeFurnitureId])
+
+  // ── Referencia a la función de centrado expuesta por Scene ─
   const centerCameraRef = useRef<CenterCameraFn>(() => {})
+  const setCameraPresetRef = useRef<SetCameraPresetFn>(() => {})
 
   const handleCenterReady = useCallback((fn: CenterCameraFn) => {
     centerCameraRef.current = fn
   }, [])
+
+  const handlePresetReady = useCallback((fn: SetCameraPresetFn) => {
+    setCameraPresetRef.current = fn
+  }, [])
+
+  // ── Handler de vistas rápidas ──────────────────────────────
+  const handleCameraPreset = useCallback((preset: CameraPreset) => {
+    setCameraPresetRef.current(preset)
+    setCameraView(preset)
+  }, [setCameraView])
 
   // Encontrar el mueble activo para mostrar sus dimensiones
   const activeFurniture = project?.furnitures.find(f => f.id === activeFurnitureId)
@@ -36,7 +76,11 @@ export default function SceneArea(_props: SceneAreaProps) {
           <div className="text-sm text-slate-400">Cargando visor 3D...</div>
         </div>
       }>
-        <Scene onCenterReady={handleCenterReady} />
+        <Scene
+          onCenterReady={handleCenterReady}
+          onPresetReady={handlePresetReady}
+          explodedMode={explodedMode}
+        />
       </Suspense>
 
       {/* ── Overlays superiores ── */}
@@ -66,11 +110,28 @@ export default function SceneArea(_props: SceneAreaProps) {
 
       {/* Controles: vistas rápidas + toggle puertas */}
       <div className="absolute top-3 right-3 flex flex-col gap-1.5">
+        {/* Botones de vistas rápidas */}
         <div className="flex gap-1">
-          <SceneButton label={t('scene.front')}       onClick={() => {}} />
-          <SceneButton label={t('scene.side')}        onClick={() => {}} />
-          <SceneButton label={t('scene.top')}         onClick={() => {}} />
-          <SceneButton label={t('scene.perspective')} onClick={() => {}} active />
+          <SceneButton
+            label={t('scene.front')}
+            onClick={() => handleCameraPreset('front')}
+            active={cameraView === 'front'}
+          />
+          <SceneButton
+            label={t('scene.side')}
+            onClick={() => handleCameraPreset('side')}
+            active={cameraView === 'side'}
+          />
+          <SceneButton
+            label={t('scene.top')}
+            onClick={() => handleCameraPreset('top')}
+            active={cameraView === 'top'}
+          />
+          <SceneButton
+            label={t('scene.perspective')}
+            onClick={() => handleCameraPreset('perspective')}
+            active={cameraView === 'perspective'}
+          />
         </div>
         <div className="flex gap-1 justify-end">
           <SceneButton
@@ -82,6 +143,18 @@ export default function SceneArea(_props: SceneAreaProps) {
             onClick={toggleDoors}
             title={showDoors ? t('scene.doors_open') : t('scene.doors_closed')}
             active={showDoors}
+          />
+          <SceneButton
+            label="💥"
+            onClick={toggleExploded}
+            title={explodedMode ? t('scene.normal_view') : t('scene.exploded_view')}
+            active={explodedMode}
+          />
+          <SceneButton
+            label={isExporting ? '…' : '📦'}
+            onClick={handleExportGLB}
+            title={t('scene.export_glb')}
+            active={false}
           />
         </div>
       </div>

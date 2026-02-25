@@ -3,6 +3,16 @@
     "name": "Furniture Studio",
     "tagline": "Diseño paramétrico de muebles"
   },
+  "header": {
+    "export": "Exportar",
+    "export_csv": "CSV — BOM completa",
+    "export_glb": "GLB — Modelo 3D",
+    "export_pdf_quote": "PDF Cotización",
+    "export_pdf_cuts": "PDF Lista de Corte",
+    "export_pdf_assembly": "PDF Manual de Armado",
+    "export_json": "JSON — Proyecto completo",
+    "generating": "Generando..."
+  },
   "nav": {
     "project": "Proyecto",
     "furniture": "Muebles",
@@ -186,7 +196,9 @@
     "no_data": "Sin datos. Configura un mueble primero.",
     "grain_along": "Paralela",
     "grain_across": "Perpendicular",
-    "grain_any": "Indiferente"
+    "grain_any": "Indiferente",
+    "kerf": "Kerf sierra",
+    "waste_percent": "Desperdicio"
   },
   "cost": {
     "title": "Cotización",
@@ -207,7 +219,10 @@
     "center": "Centrar",
     "doors_open": "Puertas abiertas",
     "doors_closed": "Puertas cerradas",
-    "unit": "mm"
+    "unit": "mm",
+    "exploded_view": "Vista explosionada",
+    "normal_view": "Vista normal",
+    "export_glb": "Exportar GLB"
   },
   "validation": {
     "required": "Este campo es obligatorio",
@@ -245,5 +260,12 @@
     "has_back_panel": "Panel posterior",
     "back_panel_height": "Alto panel posterior",
     "open_back": "Sin fondo"
+  },
+  "export": {
+    "pdf_quote": "PDF Cotización",
+    "pdf_cuts": "PDF Lista de Corte",
+    "pdf_assembly": "PDF Manual de Armado",
+    "generating": "Generando...",
+    "download": "Descargar"
   }
 }

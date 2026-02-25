@@ -1,7 +1,8 @@
 // TODO: Cuando el uiStore esté disponible, migrar bomMode a uiStore.bomMode
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useProjectStore } from '@/store/projectStore'
+import { useCatalogStore } from '@/store/catalogStore'
 import type { BOM, BOMItem, BOMHardwareItem } from '@/engine/types'
 
 type BOMMode = 'by_furniture' | 'consolidated'
@@ -23,10 +24,31 @@ function fmtArea(n: number | undefined): string {
 export default function BOMPanel() {
   const { t } = useTranslation()
   const { activeProject, activeFurnitureId } = useProjectStore()
+  const { getMaterial } = useCatalogStore()
   const project = activeProject()
 
   // TODO: usar uiStore.bomMode cuando esté disponible
   const [mode, setMode] = useState<BOMMode>('by_furniture')
+
+  // Estado local de precios editables por materialId
+  // Inicializado con los precios del catálogo
+  const [materialPrices, setMaterialPrices] = useState<Record<string, number>>(() => {
+    if (!project) return {}
+    const prices: Record<string, number> = {}
+    for (const f of project.furnitures) {
+      for (const part of f.result?.bom.parts ?? []) {
+        if (!(part.materialId in prices)) {
+          const mat = getMaterial(part.materialId)
+          prices[part.materialId] = mat?.pricePerSqm ?? part.unitPrice
+        }
+      }
+    }
+    return prices
+  })
+
+  const handlePriceChange = useCallback((materialId: string, value: number) => {
+    setMaterialPrices(prev => ({ ...prev, [materialId]: value }))
+  }, [])
 
   if (!project) {
     return <EmptyState text={t('bom.no_data')} />
@@ -91,7 +113,13 @@ export default function BOMPanel() {
       ) : (
         <div className="space-y-4">
           {bomsToShow.map(({ label, bom }) => (
-            <BOMSection key={bom.furnitureId} label={label} bom={bom} />
+            <BOMSection
+              key={bom.furnitureId}
+              label={label}
+              bom={bom}
+              materialPrices={materialPrices}
+              onPriceChange={handlePriceChange}
+            />
           ))}
         </div>
       )}
@@ -101,8 +129,40 @@ export default function BOMPanel() {
 
 // ─── Sección de BOM de un mueble ─────────────────────────────
 
-function BOMSection({ label, bom }: { label: string; bom: BOM }) {
+interface BOMSectionProps {
+  label: string
+  bom: BOM
+  materialPrices: Record<string, number>
+  onPriceChange: (materialId: string, value: number) => void
+}
+
+function BOMSection({ label, bom, materialPrices, onPriceChange }: BOMSectionProps) {
   const { t } = useTranslation()
+
+  // Recalcular subtotales y totales con los precios editados
+  const recalcParts = useMemo(() => {
+    return bom.parts.map(item => {
+      const pricePerSqm = materialPrices[item.materialId] ?? item.unitPrice
+      // unitPrice en BOM es precio total de esa fila (areaSqm × precio/m²)
+      // Recalculamos: subtotal = areaSqm × pricePerSqm
+      const newSubtotal = Math.round(item.areaSqm * pricePerSqm * 100) / 100
+      return { ...item, unitPrice: pricePerSqm, subtotal: newSubtotal }
+    })
+  }, [bom.parts, materialPrices])
+
+  const recalcTotalMaterials = useMemo(
+    () => Math.round(recalcParts.reduce((s, i) => s + i.subtotal, 0) * 100) / 100,
+    [recalcParts],
+  )
+
+  const recalcGrandTotal = useMemo(
+    () => Math.round((recalcTotalMaterials + bom.totalHardware) * 100) / 100,
+    [recalcTotalMaterials, bom.totalHardware],
+  )
+
+  const totalsChanged =
+    recalcTotalMaterials !== bom.totalMaterials ||
+    recalcGrandTotal !== bom.grandTotal
 
   return (
     <div className="space-y-2">
@@ -124,17 +184,23 @@ function BOMSection({ label, bom }: { label: string; bom: BOM }) {
               <Th>{t('bom.thickness')}</Th>
               <Th>{t('bom.area_sqm')}</Th>
               <Th align="left">{t('bom.material')}</Th>
+              <Th>{t('bom.unit_price')}</Th>
               <Th>{t('bom.subtotal')}</Th>
             </tr>
           </thead>
           <tbody>
-            {bom.parts.length === 0 ? (
+            {recalcParts.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center text-slate-300 py-2 italic">-</td>
+                <td colSpan={10} className="text-center text-slate-300 py-2 italic">-</td>
               </tr>
             ) : (
-              bom.parts.map(item => (
-                <BOMRow key={item.partId} item={item} />
+              recalcParts.map(item => (
+                <BOMRow
+                  key={item.partId}
+                  item={item}
+                  editedPrice={materialPrices[item.materialId]}
+                  onPriceChange={(val) => onPriceChange(item.materialId, val)}
+                />
               ))
             )}
           </tbody>
@@ -169,9 +235,21 @@ function BOMSection({ label, bom }: { label: string; bom: BOM }) {
 
       {/* Footer de totales */}
       <div className="border-t border-surface-200 pt-2 space-y-1">
-        <TotalRow label={t('bom.total_materials')} value={fmt(bom.totalMaterials)} />
-        <TotalRow label={t('bom.total_hardware')}  value={fmt(bom.totalHardware)}  />
-        <TotalRow label={t('bom.grand_total')}     value={fmt(bom.grandTotal)} bold />
+        <TotalRow
+          label={t('bom.total_materials')}
+          value={fmt(recalcTotalMaterials)}
+          changed={recalcTotalMaterials !== bom.totalMaterials}
+        />
+        <TotalRow
+          label={t('bom.total_hardware')}
+          value={fmt(bom.totalHardware)}
+        />
+        <TotalRow
+          label={t('bom.grand_total')}
+          value={fmt(recalcGrandTotal)}
+          bold
+          changed={totalsChanged}
+        />
       </div>
     </div>
   )
@@ -179,7 +257,32 @@ function BOMSection({ label, bom }: { label: string; bom: BOM }) {
 
 // ─── Filas de tabla ───────────────────────────────────────────
 
-function BOMRow({ item }: { item: BOMItem }) {
+interface BOMRowProps {
+  item: BOMItem
+  editedPrice?: number
+  onPriceChange: (val: number) => void
+}
+
+function BOMRow({ item, editedPrice, onPriceChange }: BOMRowProps) {
+  const [localVal, setLocalVal] = useState<string>(
+    String(editedPrice ?? item.unitPrice),
+  )
+
+  const handleBlur = () => {
+    const parsed = parseFloat(localVal)
+    if (!isNaN(parsed) && parsed >= 0) {
+      onPriceChange(parsed)
+    } else {
+      setLocalVal(String(editedPrice ?? item.unitPrice))
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur()
+    }
+  }
+
   return (
     <tr className="border-b border-surface-100 hover:bg-surface-50">
       <td className="py-1 px-1.5 text-center font-mono font-semibold text-slate-500 w-8">{item.partCode ?? '-'}</td>
@@ -190,6 +293,22 @@ function BOMRow({ item }: { item: BOMItem }) {
       <td className="py-1 px-1.5 text-right font-mono text-slate-600">{item.thickness}</td>
       <td className="py-1 px-1.5 text-right font-mono text-slate-500">{fmtArea(item.areaSqm)}</td>
       <td className="py-1 px-1.5 text-slate-600 truncate max-w-[80px]">{item.materialName}</td>
+      {/* Precio/m² editable inline */}
+      <td className="py-1 px-1.5 text-right font-mono">
+        <input
+          type="number"
+          min={0}
+          step={0.5}
+          value={localVal}
+          onChange={e => setLocalVal(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          className="w-16 border-b border-slate-300 bg-transparent text-right text-[10px]
+                     font-mono text-slate-700 focus:outline-none focus:border-primary-400
+                     hover:border-slate-400 transition-colors"
+          title="Precio por m²"
+        />
+      </td>
       <td className="py-1 px-1.5 text-right font-mono text-slate-700">{fmt(item.subtotal)}</td>
     </tr>
   )
@@ -216,11 +335,11 @@ function Th({ children, align = 'right' }: { children: React.ReactNode; align?: 
   )
 }
 
-function TotalRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+function TotalRow({ label, value, bold, changed }: { label: string; value: string; bold?: boolean; changed?: boolean }) {
   return (
     <div className={`flex justify-between items-center text-[11px] ${bold ? 'font-bold text-slate-800' : 'text-slate-600'}`}>
       <span>{label}</span>
-      <span className="font-mono">{value}</span>
+      <span className={`font-mono ${changed ? 'text-amber-600' : ''}`}>{value}</span>
     </div>
   )
 }

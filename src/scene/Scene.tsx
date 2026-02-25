@@ -4,10 +4,22 @@ import { OrbitControls, Grid, GizmoHelper, GizmoViewport } from '@react-three/dr
 import * as THREE from 'three'
 import { useProjectStore } from '@/store/projectStore'
 import FurnitureModel from './FurnitureModel'
+import ExplodedView from './ExplodedView'
 
 // ─── Tipos de referencia de cámara ───────────────────────────
 
 export type CenterCameraFn = () => void
+export type CameraPreset = 'front' | 'side' | 'top' | 'perspective'
+export type SetCameraPresetFn = (preset: CameraPreset) => void
+
+// ─── Posiciones de preset de cámara ──────────────────────────
+
+const CAMERA_PRESETS: Record<CameraPreset, { position: [number, number, number]; target: [number, number, number] }> = {
+  front:       { position: [0,   1.5, 4], target: [0, 1.2, 0] },
+  side:        { position: [4,   1.5, 0], target: [0, 1.2, 0] },
+  top:         { position: [0,   5,   0], target: [0, 0,   0] },
+  perspective: { position: [3,   2.5, 3], target: [0, 1.2, 0] },
+}
 
 // ─── Contenido interno de la escena ──────────────────────────
 
@@ -15,9 +27,12 @@ interface SceneContentProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   orbitRef: React.RefObject<any>
   onCenterReady: (fn: CenterCameraFn) => void
+  onPresetReady: (fn: SetCameraPresetFn) => void
+  /** Cuando true, el mueble activo se muestra en modo explosionado */
+  explodedMode?: boolean
 }
 
-function SceneContent({ orbitRef, onCenterReady }: SceneContentProps) {
+function SceneContent({ orbitRef, onCenterReady, onPresetReady, explodedMode = false }: SceneContentProps) {
   const { activeFurnitures, activeFurnitureId, setActiveFurniture } =
     useProjectStore()
   const { camera } = useThree()
@@ -74,21 +89,51 @@ function SceneContent({ orbitRef, onCenterReady }: SceneContentProps) {
     camera.lookAt(target)
   }, [furnitures, camera, orbitRef])
 
-  // Exponer centerCamera al padre vía callback
-  // Solo se llama una vez por render (se re-expone cuando furnitures cambia)
-  // Usamos el patrón "ref callback sin useEffect" para mantenerlo sincronizado
+  // ── Preset de cámara ────────────────────────────────────────
+  const setCameraPreset = useCallback((preset: CameraPreset) => {
+    const { position, target } = CAMERA_PRESETS[preset]
+    const targetVec = new THREE.Vector3(...target)
+
+    if (orbitRef.current) {
+      orbitRef.current.target.copy(targetVec)
+      orbitRef.current.update()
+    }
+
+    camera.position.set(...position)
+    camera.lookAt(targetVec)
+  }, [camera, orbitRef])
+
+  // Exponer centerCamera y setCameraPreset al padre vía callback
+  // Usamos el patrón "ref callback sin useEffect" para mantenerlos sincronizados
   onCenterReady(centerCamera)
+  onPresetReady(setCameraPreset)
 
   return (
     <>
-      {furnitures.map(furniture => (
-        <FurnitureModel
-          key={furniture.id}
-          furniture={furniture}
-          isSelected={furniture.id === activeFurnitureId}
-          onClick={() => setActiveFurniture(furniture.id)}
-        />
-      ))}
+      {furnitures.map(furniture => {
+        const isActive = furniture.id === activeFurnitureId
+        const showExploded = explodedMode && isActive
+
+        if (showExploded) {
+          // Modo explosionado: solo el mueble activo en vista desmontada
+          return (
+            <ExplodedView
+              key={furniture.id}
+              furniture={furniture}
+              explodeScale={1.6}
+            />
+          )
+        }
+
+        return (
+          <FurnitureModel
+            key={furniture.id}
+            furniture={furniture}
+            isSelected={isActive}
+            onClick={() => setActiveFurniture(furniture.id)}
+          />
+        )
+      })}
     </>
   )
 }
@@ -97,12 +142,16 @@ function SceneContent({ orbitRef, onCenterReady }: SceneContentProps) {
 
 interface SceneProps {
   onCenterReady?: (fn: CenterCameraFn) => void
+  onPresetReady?: (fn: SetCameraPresetFn) => void
+  /** Cuando true, el mueble activo se muestra en vista explosionada */
+  explodedMode?: boolean
 }
 
-export default function Scene({ onCenterReady }: SceneProps) {
+export default function Scene({ onCenterReady, onPresetReady, explodedMode = false }: SceneProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const orbitRef = useRef<any>(null)
   const centerFnRef = useRef<CenterCameraFn>(() => {})
+  const presetFnRef = useRef<SetCameraPresetFn>(() => {})
 
   const handleCenterReady = useCallback(
     (fn: CenterCameraFn) => {
@@ -110,6 +159,14 @@ export default function Scene({ onCenterReady }: SceneProps) {
       onCenterReady?.(fn)
     },
     [onCenterReady],
+  )
+
+  const handlePresetReady = useCallback(
+    (fn: SetCameraPresetFn) => {
+      presetFnRef.current = fn
+      onPresetReady?.(fn)
+    },
+    [onPresetReady],
   )
 
   return (
@@ -150,7 +207,12 @@ export default function Scene({ onCenterReady }: SceneProps) {
       </mesh>
 
       {/* Muebles del proyecto activo */}
-      <SceneContent orbitRef={orbitRef} onCenterReady={handleCenterReady} />
+      <SceneContent
+        orbitRef={orbitRef}
+        onCenterReady={handleCenterReady}
+        onPresetReady={handlePresetReady}
+        explodedMode={explodedMode}
+      />
 
       {/* Controles de cámara */}
       <OrbitControls

@@ -1,11 +1,31 @@
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useProjectStore } from '@/store/projectStore'
 import type { SheetGroup, CutListItem, GrainDirection } from '@/engine/types'
+
+// ─── Constantes ───────────────────────────────────────────────
+
+const SHEET_LENGTH_MM = 2440
+const SHEET_WIDTH_MM  = 1220
+const SHEET_AREA_SQM  = (SHEET_LENGTH_MM * SHEET_WIDTH_MM) / 1_000_000  // 2.9768 m²
 
 // ─── Helpers ─────────────────────────────────────────────────
 
 function fmtArea(n: number): string {
   return n.toFixed(4)
+}
+
+/**
+ * Calcula la cantidad de tableros necesarios aplicando kerf y desperdicio.
+ * @param totalAreaSqm — Área neta total del grupo (m²)
+ * @param kerf         — Kerf de sierra en mm (típico: 3)
+ * @param wastePercent — Porcentaje de desperdicio adicional (típico: 10)
+ */
+function calcSheetsNeeded(totalAreaSqm: number, kerf: number, wastePercent: number): number {
+  // Aproximación: el kerf agrega ~(kerf/SHEET_WIDTH_MM) de pérdida proporcional por corte
+  const areaConKerf = totalAreaSqm * (1 + kerf / SHEET_WIDTH_MM)
+  const areaConDesperdicio = areaConKerf * (1 + wastePercent / 100)
+  return Math.ceil(areaConDesperdicio / SHEET_AREA_SQM)
 }
 
 // ─── Componente principal ─────────────────────────────────────
@@ -14,6 +34,21 @@ export default function CutListPanel() {
   const { t } = useTranslation()
   const { activeProject, activeFurnitureId } = useProjectStore()
   const project = activeProject()
+
+  // ── Estado: kerf y desperdicio ────────────────────────────
+  const [kerf, setKerf] = useState<number>(3)
+  const [wastePercent, setWastePercent] = useState<number>(10)
+
+  // Handlers con validación numérica
+  const handleKerfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value)
+    if (!isNaN(val)) setKerf(Math.max(0, Math.min(10, val)))
+  }
+
+  const handleWasteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value)
+    if (!isNaN(val)) setWastePercent(Math.max(0, Math.min(100, val)))
+  }
 
   if (!project) {
     return <EmptyState text={t('cutlist.no_data')} />
@@ -41,12 +76,57 @@ export default function CutListPanel() {
 
   return (
     <div className="space-y-4">
+      {/* ── Configuración de kerf y desperdicio ─────────────── */}
+      <div className="bg-slate-50 rounded-md border border-surface-200 px-3 py-2 space-y-1.5">
+        <div className="flex items-center gap-3">
+          <label className="text-[11px] text-slate-600 w-28 shrink-0">
+            {t('cutlist.kerf')}
+          </label>
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min={0}
+              max={10}
+              step={0.5}
+              value={kerf}
+              onChange={handleKerfChange}
+              className="w-16 text-[11px] rounded border border-surface-200 bg-white
+                         px-2 py-0.5 text-slate-700 text-right font-mono
+                         focus:outline-none focus:ring-1 focus:ring-primary-400"
+            />
+            <span className="text-[10px] text-slate-400">mm</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-[11px] text-slate-600 w-28 shrink-0">
+            {t('cutlist.waste_percent')}
+          </label>
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={wastePercent}
+              onChange={handleWasteChange}
+              className="w-16 text-[11px] rounded border border-surface-200 bg-white
+                         px-2 py-0.5 text-slate-700 text-right font-mono
+                         focus:outline-none focus:ring-1 focus:ring-primary-400"
+            />
+            <span className="text-[10px] text-slate-400">%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Grupos de material ───────────────────────────────── */}
       {allGroups.map(({ furnitureName, group }, idx) => (
         <CutListGroup
           key={`${furnitureName}-${group.materialId}-${group.thickness}-${idx}`}
           group={group}
           furnitureName={furnitureName}
           showFurnitureName={targets.length > 1}
+          kerf={kerf}
+          wastePercent={wastePercent}
         />
       ))}
     </div>
@@ -55,12 +135,23 @@ export default function CutListPanel() {
 
 // ─── Grupo de material ────────────────────────────────────────
 
-function CutListGroup({ group, furnitureName, showFurnitureName }: {
+function CutListGroup({ group, furnitureName, showFurnitureName, kerf, wastePercent }: {
   group: SheetGroup
   furnitureName: string
   showFurnitureName: boolean
+  kerf: number
+  wastePercent: number
 }) {
   const { t } = useTranslation()
+
+  // Recalcular tableros con kerf y desperdicio personalizados
+  const sheetsNeeded = useMemo(
+    () => calcSheetsNeeded(group.totalAreaSqm, kerf, wastePercent),
+    [group.totalAreaSqm, kerf, wastePercent],
+  )
+
+  // Indicar si cambió respecto al valor original del engine
+  const sheetsChanged = sheetsNeeded !== group.sheetsNeeded
 
   return (
     <div className="space-y-1.5">
@@ -77,8 +168,8 @@ function CutListGroup({ group, furnitureName, showFurnitureName }: {
             — {furnitureName}
           </span>
         )}
-        <span className="ml-auto text-[10px] font-medium text-primary-600">
-          {group.sheetsNeeded} {t('cutlist.sheets_needed')}
+        <span className={`ml-auto text-[10px] font-medium ${sheetsChanged ? 'text-amber-600' : 'text-primary-600'}`}>
+          {sheetsNeeded} {t('cutlist.sheets_needed')}
         </span>
       </div>
 
@@ -110,9 +201,19 @@ function CutListGroup({ group, furnitureName, showFurnitureName }: {
       </div>
 
       {/* Footer del grupo */}
-      <div className="flex justify-end text-[10px] text-slate-500 pr-1">
-        <span>{t('cutlist.total_area')}: </span>
-        <span className="font-mono ml-1">{fmtArea(group.totalAreaSqm)} m²</span>
+      <div className="flex justify-between items-center text-[10px] text-slate-500 pr-1">
+        <span>
+          {t('cutlist.total_area')}:&nbsp;
+          <span className="font-mono">{fmtArea(group.totalAreaSqm)} m²</span>
+        </span>
+        <span className={`font-mono ${sheetsChanged ? 'text-amber-600' : ''}`}>
+          {sheetsNeeded} {t('cutlist.sheets_needed')}
+          {sheetsChanged && (
+            <span className="text-[9px] text-slate-400 ml-1">
+              (orig. {group.sheetsNeeded})
+            </span>
+          )}
+        </span>
       </div>
     </div>
   )

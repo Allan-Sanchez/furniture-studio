@@ -3,6 +3,16 @@
     "name": "Furniture Studio",
     "tagline": "Parametric furniture design"
   },
+  "header": {
+    "export": "Export",
+    "export_csv": "CSV — Full BOM",
+    "export_glb": "GLB — 3D Model",
+    "export_pdf_quote": "PDF Quote",
+    "export_pdf_cuts": "PDF Cut List",
+    "export_pdf_assembly": "PDF Assembly Manual",
+    "export_json": "JSON — Full project",
+    "generating": "Generating..."
+  },
   "nav": {
     "project": "Project",
     "furniture": "Furniture",
@@ -186,7 +196,9 @@
     "no_data": "No data. Configure a furniture item first.",
     "grain_along": "Along",
     "grain_across": "Across",
-    "grain_any": "Any"
+    "grain_any": "Any",
+    "kerf": "Saw kerf",
+    "waste_percent": "Waste"
   },
   "cost": {
     "title": "Quote",
@@ -207,7 +219,10 @@
     "center": "Center",
     "doors_open": "Doors open",
     "doors_closed": "Doors closed",
-    "unit": "mm"
+    "unit": "mm",
+    "exploded_view": "Exploded view",
+    "normal_view": "Normal view",
+    "export_glb": "Export GLB"
   },
   "validation": {
     "required": "This field is required",
@@ -245,5 +260,12 @@
     "has_back_panel": "Back panel",
     "back_panel_height": "Back panel height",
     "open_back": "Open back"
+  },
+  "export": {
+    "pdf_quote": "PDF Quote",
+    "pdf_cuts": "PDF Cut List",
+    "pdf_assembly": "PDF Assembly Manual",
+    "generating": "Generating...",
+    "download": "Download"
   }
 }
