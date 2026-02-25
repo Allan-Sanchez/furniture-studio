@@ -1,6 +1,18 @@
 // ============================================================
 // FURNITURE STUDIO — FurnitureParts helper
-// Lógica de posicionamiento y color de piezas individuales
+// Lógica de posicionamiento y escala de piezas individuales
+//
+// Convención del engine (mm):
+//   Lateral:        length=depth, width=height, thickness=t
+//   Tapa/Piso:      length=depth, width=innerWidth, thickness=t
+//   Panel trasero:  length=innerWidth, width=innerHeight, thickness=bt
+//   Estante:        length=depth, width=innerWidth, thickness=t
+//   Zócalo:         length=innerWidth, width=socleH, thickness=t
+//   Puerta:         length=height, width=width, thickness=t
+//   Cajón (frente): length=innerWidth, width=drawerH, thickness=t
+//
+// Three.js boxGeometry scale: [X=ancho, Y=alto, Z=profundidad]
+// Origen del mueble: centro en X, suelo en Y=0, centro en Z (local)
 // ============================================================
 
 import type { Part, Furniture, ParamSet } from '@/engine/types'
@@ -23,17 +35,113 @@ function getSocleHeight(params: ParamSet): number {
   return p.hasSocle && p.socleHeight ? p.socleHeight : 0
 }
 
-// ─── Posición de pieza ───────────────────────────────────────
+function getBackThickness(params: ParamSet): number {
+  const p = params as { hasBack?: boolean; backPanelThickness?: number }
+  return p.hasBack && p.backPanelThickness ? p.backPanelThickness : 0
+}
 
-/**
- * Retorna [x, y, z] en unidades de escena para un Part dado.
- * Origen del mueble: centro inferior (x=0, y=0, z=0 en local).
- * Convención: 1 unidad = 1 metro = 1000 mm
- *
- * @param part       - la pieza a posicionar
- * @param unitIndex  - índice 0-based dentro de su Part (para quantity > 1)
- * @param furniture  - mueble padre con params
- */
+// ─── Clasificación de pieza ───────────────────────────────────
+
+type PartCategory =
+  | 'lateral'
+  | 'top'
+  | 'bottom'
+  | 'back'
+  | 'shelf'
+  | 'zocalo'
+  | 'door'
+  | 'drawer_front'
+  | 'drawer_body'
+  | 'rail'
+  | 'countertop'
+  | 'divider'
+  | 'other'
+
+function classify(label: string): PartCategory {
+  const l = label.toLowerCase()
+
+  if (l.includes('lateral')) return 'lateral'
+  if (l.includes('tapa superior') || l === 'top') return 'top'
+  if (l.includes('piso inferior') || l.includes('bottom')) return 'bottom'
+  if (l.includes('panel trasero') || l.includes('fondo')) return 'back'
+  if (l.includes('zócalo') || l.includes('zocalo') || l.includes('socle')) return 'zocalo'
+  if (l.includes('estante') || l.includes('shelf')) return 'shelf'
+  if (l.includes('puerta') || l.includes('door') || l.includes('corredero') || l.includes('sliding')) return 'door'
+  if (l.includes('frente cajón') || l.includes('frente cajon') || (l.includes('frente') && !l.includes('interior'))) return 'drawer_front'
+  if (l.includes('frente interior') || l.includes('trasero cajón') || l.includes('lateral cajón') || l.includes('fondo cajón')) return 'drawer_body'
+  if (l.includes('barra') || l.includes('rail') || l.includes('hanging')) return 'rail'
+  if (l.includes('encimera') || l.includes('countertop')) return 'countertop'
+  if (l.includes('divisor') || l.includes('divider')) return 'divider'
+  return 'other'
+}
+
+// ─── Escala de pieza ─────────────────────────────────────────
+//
+// Retorna [scaleX, scaleY, scaleZ] en metros (unidades Three.js).
+// X = ancho horizontal, Y = alto vertical, Z = profundidad.
+//
+// Para cada categoría mapeamos (length, width, thickness) del engine
+// a los ejes correctos de Three.js.
+
+export function partScale(part: Part): [number, number, number] {
+  const cat = classify(part.label)
+  const len = part.length / 1000
+  const wid = part.width / 1000
+  const thi = part.thickness / 1000
+
+  switch (cat) {
+    // length=depth, width=height, thickness=t  → X=t, Y=height, Z=depth
+    case 'lateral':
+      return [thi, wid, len]
+
+    // length=depth, width=innerWidth, thickness=t → X=innerWidth, Y=t, Z=depth
+    case 'top':
+    case 'bottom':
+    case 'shelf':
+      return [wid, thi, len]
+
+    // length=innerWidth, width=innerHeight, thickness=bt → X=innerWidth, Y=innerHeight, Z=bt
+    case 'back':
+      return [len, wid, thi]
+
+    // length=innerWidth, width=socleH, thickness=t → X=innerWidth, Y=socleH, Z=t
+    case 'zocalo':
+      return [len, wid, thi]
+
+    // Puertas: length=doorHeight, width=doorWidth, thickness=t → X=doorWidth, Y=doorHeight, Z=t
+    case 'door':
+      return [wid, len, thi]
+
+    // Frente exterior cajón: length=innerWidth, width=drawerH, thickness=t → X=innerWidth, Y=drawerH, Z=t
+    case 'drawer_front':
+      return [len, wid, thi]
+
+    // Cuerpo cajón (múltiples piezas pequeñas): aproximado como [innerWidth, bodyH, t]
+    case 'drawer_body':
+      return [len, wid, thi]
+
+    // Encimera: length=depth+overhang, width=innerWidth+overhang, thickness=ct → X=innerWidth, Y=ct, Z=depth
+    case 'countertop':
+      return [wid, thi, len]
+
+    // Divisor vertical: length=depth, width=innerH, thickness=t → X=t, Y=innerH, Z=depth
+    case 'divider':
+      return [thi, wid, len]
+
+    // Barra: length=innerWidth, thin en Y y Z
+    case 'rail':
+      return [len, 0.02, 0.02]
+
+    default:
+      return [len, thi, wid]
+  }
+}
+
+// ─── Posición de pieza ───────────────────────────────────────
+//
+// Retorna [x, y, z] en metros (coordenadas locales del grupo del mueble).
+// Origen local: centro-inferior del mueble (x=0, y=0, z=0).
+
 export function partPosition(
   part: Part,
   unitIndex: number,
@@ -46,166 +154,127 @@ export function partPosition(
   const H = totalHeight / 1000
   const D = totalDepth / 1000
   const t = boardThickness / 1000
+  const bt = getBackThickness(furniture.params) / 1000
   const socleH = getSocleHeight(furniture.params) / 1000
 
-  const label = part.label.toLowerCase()
+  const innerW = W - 2 * t
+  const innerH = H - 2 * t
 
-  // ── Laterales (quantity=2) ────────────────────────────────
-  // unitIndex=0 → lado izquierdo, unitIndex=1 → lado derecho
-  if (label.includes('lateral')) {
-    const x = unitIndex === 0 ? -(W / 2 - t / 2) : (W / 2 - t / 2)
-    return [x, H / 2, 0]
-  }
+  const cat = classify(part.label)
+  const scale = partScale(part)
 
-  // ── Tapa superior ─────────────────────────────────────────
-  if (label.includes('tapa superior') || label.includes('tapa_superior')) {
-    return [0, H - t / 2, 0]
-  }
-
-  // ── Piso inferior ─────────────────────────────────────────
-  if (
-    label.includes('piso inferior') ||
-    label.includes('piso_inferior') ||
-    label.includes('base')
-  ) {
-    return [0, socleH + t / 2, 0]
-  }
-
-  // ── Panel trasero / fondo ─────────────────────────────────
-  if (
-    label.includes('panel trasero') ||
-    label.includes('fondo') ||
-    label.includes('trasero') ||
-    label.includes('back')
-  ) {
-    return [0, H / 2, -(D / 2 - t / 2)]
-  }
-
-  // ── Zócalo frontal ────────────────────────────────────────
-  if (label.includes('zócalo') || label.includes('zocalo') || label.includes('socle')) {
-    return [0, socleH / 2, D / 2]
-  }
-
-  // ── Estantes — distribución uniforme en Y ─────────────────
-  // Para quantity=N estantes: posiciones i=0..N-1
-  // y = socleH + t + (innerH - t) * i / (count - 1)  (cuando count > 1)
-  if (label.includes('estante') || label.includes('shelf')) {
-    const count = part.quantity > 0 ? part.quantity : 1
-    const innerH = H - socleH - t * 2  // espacio interior entre piso y tapa
-    let y: number
-    if (count === 1) {
-      y = socleH + t + innerH / 2
-    } else {
-      y = socleH + t + (innerH - t) * unitIndex / (count - 1)
+  switch (cat) {
+    // Laterales: izquierdo y derecho, centrados en Y y Z
+    case 'lateral': {
+      const x = unitIndex === 0 ? -(W / 2 - t / 2) : (W / 2 - t / 2)
+      return [x, H / 2, 0]
     }
-    return [0, y, 0]
+
+    // Tapa superior: centrada en X, al tope en Y, centrada en Z
+    case 'top':
+      return [0, H - t / 2, 0]
+
+    // Piso inferior: centrado en X, sobre el zócalo, centrado en Z
+    case 'bottom':
+      return [0, socleH + t / 2, 0]
+
+    // Panel trasero: centrado en X e Y, pegado al fondo en Z
+    case 'back': {
+      const backY = socleH + t + innerH / 2  // centro entre piso y tapa
+      return [0, backY, -(D / 2 - bt / 2)]
+    }
+
+    // Zócalo frontal: centrado en X, en la base en Y, al frente en Z
+    case 'zocalo':
+      return [0, socleH / 2, D / 2 - t / 2]
+
+    // Estantes: distribuidos uniformemente en Y, centrados en X y Z
+    case 'shelf': {
+      const count = part.quantity > 0 ? part.quantity : 1
+      const availH = innerH - socleH  // espacio interior útil
+      let y: number
+      if (count === 1) {
+        y = socleH + t + availH / 2
+      } else {
+        // Distribuir N estantes en el espacio interior
+        y = socleH + t + (availH / (count + 1)) * (unitIndex + 1)
+      }
+      // Retroceder del panel trasero
+      const shelfZ = -bt / 2
+      return [0, y, shelfZ]
+    }
+
+    // Puertas abatibles / correderas: centradas, al frente
+    case 'door': {
+      const numDoors = part.quantity
+      // Dividir ancho interior entre las puertas
+      const doorSlotW = innerW / numDoors
+      const x = -(innerW / 2) + doorSlotW * unitIndex + doorSlotW / 2
+      return [x, (socleH + t + (H - t)) / 2, D / 2 + scale[2] / 2]
+    }
+
+    // Frente cajón: al frente, apilados verticalmente
+    case 'drawer_front': {
+      const drawerH = scale[1]
+      const y = socleH + t + drawerH / 2 + unitIndex * drawerH
+      return [0, y, D / 2 + scale[2] / 2]
+    }
+
+    // Cuerpo cajón: pequeño offset visual, dentro del mueble
+    case 'drawer_body': {
+      const y = socleH + t + scale[1] / 2
+      return [0, y, 0]
+    }
+
+    // Encimera: sobre la tapa superior
+    case 'countertop':
+      return [0, H + scale[1] / 2, 0]
+
+    // Divisor vertical: distribuido en X, de piso a techo
+    case 'divider': {
+      const count = part.quantity > 0 ? part.quantity : 1
+      const offsetX = -(innerW / 2) + (innerW / (count + 1)) * (unitIndex + 1)
+      return [offsetX, (socleH + t + H - t) / 2, 0]
+    }
+
+    // Barra: en la altura configurada, centrada
+    case 'rail': {
+      const railH = (furniture.params as { hangingRailHeight?: number }).hangingRailHeight
+      const y = railH ? railH / 1000 : H * 0.7
+      return [0, y, 0]
+    }
+
+    default: {
+      const offset = (unitIndex * 0.005) % 0.05
+      return [offset, H / 2 + offset, offset]
+    }
   }
-
-  // ── Frente cajón ──────────────────────────────────────────
-  if (
-    label.includes('frente') ||
-    label.includes('cajón') ||
-    label.includes('cajon') ||
-    label.includes('drawer front')
-  ) {
-    const drawerH = part.width / 1000
-    const y = socleH + t + drawerH / 2 + unitIndex * drawerH
-    return [0, y, D / 2]
-  }
-
-  // ── Divisor vertical ──────────────────────────────────────
-  if (label.includes('divisor') || label.includes('divider')) {
-    const offsetX = (unitIndex - (part.quantity - 1) / 2) * (W / (part.quantity + 1))
-    return [offsetX, H / 2, 0]
-  }
-
-  // ── Barra / hanging rail ──────────────────────────────────
-  if (label.includes('barra') || label.includes('rail') || label.includes('hanging')) {
-    const railH =
-      (furniture.params as { hangingRailHeight?: number }).hangingRailHeight
-    const y = railH ? railH / 1000 : H * 0.7
-    return [0, y, 0]
-  }
-
-  // ── Encimera / countertop ─────────────────────────────────
-  if (
-    label.includes('encimera') ||
-    label.includes('countertop') ||
-    label.includes('tapa')
-  ) {
-    return [0, H, 0]
-  }
-
-  // Fallback: centro con pequeño offset basado en índice para evitar z-fighting
-  const offset = (unitIndex * 0.005) % 0.05
-  return [offset, H / 2 + offset, offset]
-}
-
-// ─── Escala de pieza ────────────────────────────────────────
-
-/**
- * Retorna [length/1000, thickness/1000, width/1000] en unidades de escena.
- * Three.js usa: X=ancho, Y=alto, Z=profundidad.
- * Part: length = dimensión principal, width = segunda dimensión, thickness = grosor.
- */
-export function partScale(part: Part): [number, number, number] {
-  return [
-    part.length / 1000,
-    part.thickness / 1000,
-    part.width / 1000,
-  ]
 }
 
 // ─── Color de pieza ──────────────────────────────────────────
 
 export function partColor(part: Part): string {
-  const label = part.label.toLowerCase()
+  const cat = classify(part.label)
 
-  if (
-    label.includes('panel trasero') ||
-    label.includes('fondo') ||
-    label.includes('trasero') ||
-    label.includes('hdf')
-  ) {
-    return '#E8D5B7' // crema — HDF
+  switch (cat) {
+    case 'back':       return '#D4C5A9'  // crema oscuro — HDF
+    case 'door':       return '#CBD5E1'  // azul pálido — puertas
+    case 'drawer_front': return '#94a3b8' // slate — frente cajón
+    case 'countertop': return '#9CA3AF'  // gris — encimera
+    case 'zocalo':     return '#A8A29E'  // stone — zócalo
+    case 'rail':       return '#6B7280'  // gris oscuro — barra
+    case 'shelf':      return '#BFD0E0'  // azul claro — estantes
+    default:           return '#B0C4DE'  // azul madera — estructural
   }
-
-  if (
-    label.includes('frente') ||
-    label.includes('cajón') ||
-    label.includes('cajon')
-  ) {
-    return '#94a3b8' // slate — frente cajón
-  }
-
-  if (label.includes('puerta') || label.includes('door')) {
-    return '#CBD5E1' // azul pálido — puertas
-  }
-
-  if (label.includes('encimera') || label.includes('countertop')) {
-    return '#d1d5db' // gris claro — encimera
-  }
-
-  if (label.includes('zócalo') || label.includes('zocalo') || label.includes('socle')) {
-    return '#a8a29e' // stone — zócalo
-  }
-
-  return '#B0C4DE' // azul madera claro — por defecto
 }
 
 // ─── Detección de puertas ────────────────────────────────────
 
 export function isDoorPart(part: Part): boolean {
-  const label = part.label.toLowerCase()
-  return (
-    label.includes('puerta') ||
-    label.includes('door') ||
-    label.includes('corredero') ||
-    label.includes('sliding')
-  )
+  return classify(part.label) === 'door'
 }
 
 export function isSlidingDoor(part: Part): boolean {
-  const label = part.label.toLowerCase()
-  return label.includes('corredero') || label.includes('sliding')
+  const l = part.label.toLowerCase()
+  return l.includes('corredero') || l.includes('sliding')
 }
