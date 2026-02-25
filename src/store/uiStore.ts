@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 interface UIStore {
   // Panel izquierdo
-  activeTab: 'project' | 'furniture' | 'params' | 'modules' | 'materials'
+  activeTab: 'project' | 'furniture' | 'params' | 'modules' | 'materials' | 'assembly'
   setActiveTab: (tab: UIStore['activeTab']) => void
 
   // Visor 3D

@@ -3,12 +3,22 @@ import { useTranslation } from 'react-i18next'
 import { useProjectStore } from '@/store/projectStore'
 import type { FurnitureTypeId } from '@/engine/types'
 
-const FURNITURE_TYPES: FurnitureTypeId[] = ['wardrobe', 'kitchen_base', 'kitchen_wall']
+const FURNITURE_TYPES: FurnitureTypeId[] = [
+  'wardrobe',
+  'kitchen_base',
+  'kitchen_wall',
+  'tv_unit',
+  'entertainment_center',
+  'bookcase',
+]
 
 const TYPE_ICON: Record<FurnitureTypeId, string> = {
-  wardrobe:     '🪑',
-  kitchen_base: '🍳',
-  kitchen_wall: '🗄️',
+  wardrobe:              '🪑',
+  kitchen_base:          '🍳',
+  kitchen_wall:          '🗄️',
+  tv_unit:               '📺',
+  entertainment_center:  '🎬',
+  bookcase:              '📚',
 }
 
 export default function FurniturePanel() {

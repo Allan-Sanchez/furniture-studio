@@ -5,7 +5,13 @@
 
 // ─── Identificadores ────────────────────────────────────────
 
-export type FurnitureTypeId = 'wardrobe' | 'kitchen_base' | 'kitchen_wall'
+export type FurnitureTypeId =
+  | 'wardrobe'
+  | 'kitchen_base'
+  | 'kitchen_wall'
+  | 'tv_unit'
+  | 'entertainment_center'
+  | 'bookcase'
 
 export type ModuleType =
   | 'shelf'
@@ -34,7 +40,7 @@ export type HardwareType =
   | 'lock'
   | 'other'
 
-export type ExportFormat = 'GLB' | 'CSV' | 'PDF_QUOTE' | 'PDF_CUTS' | 'JSON'
+export type ExportFormat = 'GLB' | 'CSV' | 'PDF_QUOTE' | 'PDF_CUTS' | 'JSON' | 'PDF_ASSEMBLY'
 
 export type ExportStatus = 'pending' | 'running' | 'done' | 'error'
 
@@ -81,7 +87,13 @@ export interface KitchenWallParams {
   mountingHeight: number   // mm — altura desde el suelo donde se instala
 }
 
-export type ParamSet = WardrobeParams | KitchenBaseParams | KitchenWallParams
+export type ParamSet =
+  | WardrobeParams
+  | KitchenBaseParams
+  | KitchenWallParams
+  | TvUnitParams
+  | EntertainmentCenterParams
+  | BookcaseParams
 
 // ─── Módulos internos ────────────────────────────────────────
 
@@ -175,6 +187,7 @@ export interface Part {
   finishId: string
   grain: GrainDirection
   moduleId?: string          // origen del módulo (si aplica)
+  partCode?: string          // código alfabético: A, B, C...
 }
 
 // ─── Herrajes ────────────────────────────────────────────────
@@ -193,6 +206,7 @@ export interface HardwareItem {
 
 export interface BOMItem {
   partId: string
+  partCode?: string          // código alfabético: A, B, C...
   label: string
   quantity: number
   length: number
@@ -270,6 +284,7 @@ export interface FurnitureResult {
   cutList: CutList
   hardware: HardwareItem[]
   cost: CostSummary
+  assemblySteps: AssemblyStep[]
 }
 
 // ─── Proyecto ────────────────────────────────────────────────
@@ -332,4 +347,64 @@ export interface ValidationError {
 export interface ValidationResult {
   valid: boolean
   errors: ValidationError[]
+}
+
+// ─── Fase 2 — Nuevos tipos de mueble ────────────────────────
+
+export interface TvUnitParams {
+  totalWidth: number        // mm — 900..2400
+  totalHeight: number       // mm — 400..600
+  totalDepth: number        // mm — 350..550
+  boardThickness: number    // mm — 15 | 18 | 25
+  backPanelThickness: number
+  hasBack: boolean
+  hasSocle: boolean
+  socleHeight: number       // mm — 60..150
+  doorType: DoorType
+  tvNicheWidth: number      // mm — espacio reservado para TV (centrado)
+  tvNicheHeight: number     // mm — altura del nicho TV
+}
+
+export interface EntertainmentCenterParams {
+  totalWidth: number        // mm — 1200..2800
+  totalHeight: number       // mm — 1800..2400
+  totalDepth: number        // mm — 350..550
+  boardThickness: number
+  backPanelThickness: number
+  hasBack: boolean
+  hasSocle: boolean
+  socleHeight: number
+  doorType: DoorType
+  sideColumnWidth: number   // mm — ancho de columna lateral (0 = sin columna)
+  hasBackPanel: boolean     // panel posterior elevado (zona TV)
+  backPanelHeight: number   // mm — altura del panel posterior
+}
+
+export interface BookcaseParams {
+  totalWidth: number        // mm — 600..1800
+  totalHeight: number       // mm — 900..2400
+  totalDepth: number        // mm — 200..400
+  boardThickness: number
+  backPanelThickness: number
+  hasBack: boolean          // false = estantería abierta
+  hasSocle: boolean
+  socleHeight: number
+  doorType: DoorType
+}
+
+// ─── Fase 2 — Motor de Armado ────────────────────────────────
+
+export interface AssemblyHardwareUsed {
+  type: HardwareType
+  quantity: number
+  description: string        // ej: "Tornillo 6×40mm"
+}
+
+export interface AssemblyStep {
+  stepNumber: number
+  title: { es: string; en: string }
+  description: { es: string; en: string }
+  partsInvolved: string[]    // Part IDs
+  partCodes: string[]        // Códigos alfabéticos: ['A', 'B']
+  hardwareUsed: AssemblyHardwareUsed[]
 }

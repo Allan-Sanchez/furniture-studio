@@ -35,6 +35,20 @@ export {
 // ─── Costos ──────────────────────────────────────────────────
 export { calculateCost, consolidateCosts } from './cost'
 
-// Cocina — Fase 2:
-// export { generateKitchenBaseParts } from './kitchen-base'
-// export { generateKitchenWallParts } from './kitchen-wall'
+// ─── Cocina base ─────────────────────────────────────────────
+export { generateKitchenBaseParts, generateKitchenBaseShell } from './kitchen-base'
+
+// ─── Cocina alta (mural) ─────────────────────────────────────
+export { generateKitchenWallParts, generateKitchenWallShell } from './kitchen-wall'
+
+// ─── Mueble TV ───────────────────────────────────────────────
+export { generateTvUnitParts, generateTvUnitShell } from './tv-unit'
+
+// ─── Centro de entretenimiento ───────────────────────────────
+export { generateEntertainmentCenterParts } from './entertainment-center'
+
+// ─── Estantería / librería ───────────────────────────────────
+export { generateBookcaseParts, generateBookcaseShell } from './bookcase'
+
+// ─── Motor de armado ─────────────────────────────────────────
+export { generateAssemblySteps } from './assembly'

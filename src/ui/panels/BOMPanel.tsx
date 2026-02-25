@@ -116,6 +116,7 @@ function BOMSection({ label, bom }: { label: string; bom: BOM }) {
         <table className="w-full text-[10px] border-collapse">
           <thead>
             <tr className="bg-surface-50 text-slate-500">
+              <Th align="center">{t('bom.code')}</Th>
               <Th align="left">{t('bom.piece')}</Th>
               <Th>{t('bom.qty')}</Th>
               <Th>{t('bom.length')}</Th>
@@ -129,7 +130,7 @@ function BOMSection({ label, bom }: { label: string; bom: BOM }) {
           <tbody>
             {bom.parts.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center text-slate-300 py-2 italic">-</td>
+                <td colSpan={9} className="text-center text-slate-300 py-2 italic">-</td>
               </tr>
             ) : (
               bom.parts.map(item => (
@@ -181,6 +182,7 @@ function BOMSection({ label, bom }: { label: string; bom: BOM }) {
 function BOMRow({ item }: { item: BOMItem }) {
   return (
     <tr className="border-b border-surface-100 hover:bg-surface-50">
+      <td className="py-1 px-1.5 text-center font-mono font-semibold text-slate-500 w-8">{item.partCode ?? '-'}</td>
       <td className="py-1 px-1.5 text-slate-700 truncate max-w-[80px]">{item.label}</td>
       <td className="py-1 px-1.5 text-center text-slate-600">{item.quantity}</td>
       <td className="py-1 px-1.5 text-right font-mono text-slate-600">{item.length}</td>

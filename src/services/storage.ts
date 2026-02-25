@@ -112,6 +112,36 @@ export function importProjectFromJSON(): Promise<Project | null> {
   })
 }
 
+// ─── Export todos los proyectos ───────────────────────────────
+
+/**
+ * Exporta todos los proyectos del localStorage como un único JSON de backup.
+ * Útil para respaldar toda la sesión de trabajo.
+ */
+export function exportAllProjectsAsJSON(): void {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    const projects: Project[] = raw ? (JSON.parse(raw) as Project[]) : []
+
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      version: 1,
+      projects,
+    }
+
+    const json = JSON.stringify(backup, null, 2)
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+    triggerDownload(url, `furniture-studio-backup-${timestamp}.json`)
+
+    setTimeout(() => URL.revokeObjectURL(url), 10_000)
+  } catch (err) {
+    console.error('[storage] Error al exportar todos los proyectos:', err)
+  }
+}
+
 // ─── Helpers privados ─────────────────────────────────────────
 
 /** Convierte un nombre en slug seguro para nombre de archivo */

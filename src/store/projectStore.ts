@@ -1,6 +1,22 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Project, Furniture, FurnitureTypeId, Currency, FurnitureResult, WardrobeParams, MaterialMap, FinishMap } from '@/engine/types'
+import type {
+  Project,
+  Furniture,
+  FurnitureTypeId,
+  Currency,
+  FurnitureResult,
+  WardrobeParams,
+  KitchenBaseParams,
+  KitchenWallParams,
+  TvUnitParams,
+  EntertainmentCenterParams,
+  BookcaseParams,
+  MaterialMap,
+  FinishMap,
+  BOM,
+  Part,
+} from '@/engine/types'
 import { generateId as genId } from '@/utils/generateId'
 import {
   generateWardrobeParts,
@@ -8,7 +24,14 @@ import {
   generateBOM,
   generateCutList,
   calculateCost,
+  consolidateBOMs,
 } from '@/engine'
+import { generateKitchenBaseParts } from '@/engine/kitchen-base'
+import { generateKitchenWallParts } from '@/engine/kitchen-wall'
+import { generateTvUnitParts } from '@/engine/tv-unit'
+import { generateEntertainmentCenterParts } from '@/engine/entertainment-center'
+import { generateBookcaseParts } from '@/engine/bookcase'
+import { generateAssemblySteps } from '@/engine/assembly'
 import { MATERIALS } from '@/data/materials'
 import { FINISHES } from '@/data/finishes'
 
@@ -38,6 +61,9 @@ interface ProjectStore {
 
   // Motor paramétrico
   computeFurnitureResult: (furnitureId: string, materialMap?: MaterialMap, finishMap?: FinishMap) => void
+
+  // BOM consolidada multi-mueble
+  getConsolidatedBOM: () => BOM | null
 }
 
 export const useProjectStore = create<ProjectStore>()(
@@ -212,41 +238,123 @@ export const useProjectStore = create<ProjectStore>()(
         const furniture = get().activeProject()?.furnitures.find(f => f.id === furnitureId)
         if (!furniture) return
 
-        // 2. Solo ropero en Fase 1
-        if (furniture.furnitureType !== 'wardrobe') return
+        const { params, modules } = furniture
+        let parts: Part[]
 
-        // 3. Genera piezas
-        const parts = generateWardrobeParts(
-          furnitureId,
-          furniture.params as WardrobeParams,
-          furniture.modules,
-          materialMap,
-          'mdf_18',  // material por defecto
-          'raw',     // acabado por defecto
-        )
+        // 2. Genera piezas según el tipo de mueble
+        switch (furniture.furnitureType) {
+          case 'wardrobe':
+            parts = generateWardrobeParts(
+              furnitureId,
+              params as WardrobeParams,
+              modules,
+              materialMap,
+              'mdf_18',
+              'raw',
+            )
+            break
 
-        // 4. Infiere herrajes
+          case 'kitchen_base':
+            parts = generateKitchenBaseParts(
+              furnitureId,
+              params as KitchenBaseParams,
+              modules,
+              materialMap,
+              'mdf_18',
+              'raw',
+            )
+            break
+
+          case 'kitchen_wall':
+            parts = generateKitchenWallParts(
+              furnitureId,
+              params as KitchenWallParams,
+              modules,
+              materialMap,
+              'mdf_18',
+              'raw',
+            )
+            break
+
+          case 'tv_unit':
+            parts = generateTvUnitParts(
+              furnitureId,
+              params as TvUnitParams,
+              modules,
+              materialMap,
+              'mdf_18',
+              'raw',
+            )
+            break
+
+          case 'entertainment_center':
+            parts = generateEntertainmentCenterParts(
+              furnitureId,
+              params as EntertainmentCenterParams,
+              modules,
+              materialMap,
+              'mdf_18',
+              'raw',
+            )
+            break
+
+          case 'bookcase':
+            parts = generateBookcaseParts(
+              furnitureId,
+              params as BookcaseParams,
+              modules,
+              materialMap,
+              'mdf_18',
+              'raw',
+            )
+            break
+
+          default:
+            parts = generateWardrobeParts(
+              furnitureId,
+              params as WardrobeParams,
+              modules,
+              materialMap,
+              'mdf_18',
+              'raw',
+            )
+        }
+
+        // 3. Infiere herrajes (lógica de wardrobe reutilizada para todos los tipos)
         const hardware = inferWardrobeHardware(
           furnitureId,
-          furniture.params as WardrobeParams,
-          furniture.modules,
+          params as WardrobeParams,
+          modules,
         )
 
-        // 5. Genera BOM
+        // 4. Genera BOM
         const project = get().activeProject()!
         const bom = generateBOM(furnitureId, parts, hardware, materialMap, finishMap)
 
-        // 6. Genera CutList
+        // 5. Genera CutList
         const cutList = generateCutList(furnitureId, parts, materialMap)
 
-        // 7. Calcula costo
+        // 6. Calcula costo
         const cost = calculateCost(furnitureId, bom, project.profitMargin)
 
+        // 7. Assembly steps
+        const assemblySteps = generateAssemblySteps(furnitureId, parts, modules, hardware)
+
         // 8. Construye FurnitureResult
-        const result: FurnitureResult = { parts, bom, cutList, hardware, cost }
+        const result: FurnitureResult = { parts, bom, cutList, hardware, cost, assemblySteps }
 
         // 9. Actualiza el mueble en el store (sin triggear otro auto-cálculo)
         get().updateFurniture(furnitureId, { result })
+      },
+
+      getConsolidatedBOM: () => {
+        const project = get().activeProject()
+        if (!project) return null
+        const boms = project.furnitures
+          .filter(f => f.result?.bom != null)
+          .map(f => f.result!.bom)
+        if (boms.length === 0) return null
+        return consolidateBOMs(boms)
       },
     }),
     {
@@ -262,7 +370,7 @@ export const useProjectStore = create<ProjectStore>()(
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-function getDefaultParams(type: FurnitureTypeId) {
+function getDefaultParams(type: FurnitureTypeId): KitchenBaseParams | KitchenWallParams | WardrobeParams | TvUnitParams | EntertainmentCenterParams | BookcaseParams {
   switch (type) {
     case 'wardrobe':
       return {
@@ -303,7 +411,46 @@ function getDefaultParams(type: FurnitureTypeId) {
         doorType: 'hinged' as const,
         mountingHeight: 1400,
       }
+    case 'tv_unit':
+      return {
+        totalWidth: 1800,
+        totalHeight: 450,
+        totalDepth: 450,
+        boardThickness: 18,
+        backPanelThickness: 6,
+        hasBack: true,
+        hasSocle: true,
+        socleHeight: 80,
+        doorType: 'none' as const,
+        tvNicheWidth: 900,
+        tvNicheHeight: 350,
+      }
+    case 'entertainment_center':
+      return {
+        totalWidth: 1800,
+        totalHeight: 2200,
+        totalDepth: 450,
+        boardThickness: 18,
+        backPanelThickness: 6,
+        hasBack: true,
+        hasSocle: true,
+        socleHeight: 100,
+        doorType: 'none' as const,
+        sideColumnWidth: 400,
+        hasBackPanel: true,
+        backPanelHeight: 1400,
+      }
+    case 'bookcase':
+      return {
+        totalWidth: 900,
+        totalHeight: 1800,
+        totalDepth: 300,
+        boardThickness: 18,
+        backPanelThickness: 6,
+        hasBack: false,
+        hasSocle: true,
+        socleHeight: 80,
+        doorType: 'none' as const,
+      }
   }
 }
-
-

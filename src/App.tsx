@@ -15,7 +15,7 @@ import BottomPanel from '@/ui/layout/BottomPanel'
 // │ 320px    │                                              │
 // └──────────┴──────────────────────────────────────────────┘
 
-export type ActiveTab = 'project' | 'furniture' | 'params' | 'modules' | 'materials'
+export type ActiveTab = 'project' | 'furniture' | 'params' | 'modules' | 'materials' | 'assembly'
 export type BottomTab = 'bom' | 'cutlist' | 'cost'
 
 export default function App() {

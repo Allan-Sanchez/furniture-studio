@@ -8,7 +8,8 @@
     "furniture": "Muebles",
     "params": "Parámetros",
     "modules": "Módulos",
-    "materials": "Materiales"
+    "materials": "Materiales",
+    "assembly": "Armado"
   },
   "actions": {
     "save": "Guardar",
@@ -36,7 +37,10 @@
     "types": {
       "wardrobe": "Ropero / Closet",
       "kitchen_base": "Gabinete Bajo de Cocina",
-      "kitchen_wall": "Gabinete Alto de Cocina"
+      "kitchen_wall": "Gabinete Alto de Cocina",
+      "tv_unit": "Mueble TV",
+      "entertainment_center": "Centro de Entretenimiento",
+      "bookcase": "Librero"
     },
     "presets": "Presets",
     "select_type": "Seleccionar tipo de mueble",
@@ -147,6 +151,7 @@
     "title": "Lista de materiales",
     "consolidated": "Consolidada",
     "by_furniture": "Por mueble",
+    "code": "Cód.",
     "piece": "Pieza",
     "qty": "Cant.",
     "length": "Largo",
@@ -215,5 +220,30 @@
     "export_blocked": "Corrige los errores antes de exportar",
     "save_no_name": "El proyecto necesita un nombre",
     "load_failed": "No se pudo cargar el proyecto"
+  },
+  "assembly": {
+    "title": "Guía de Armado",
+    "steps_count": "{{count}} pasos",
+    "step": "Paso {{number}}",
+    "parts_involved": "Piezas involucradas",
+    "hardware_used": "Herrajes requeridos",
+    "no_steps": "Los pasos de armado se generan automáticamente al agregar módulos al mueble.",
+    "no_furniture": "Selecciona un mueble para ver su guía de armado.",
+    "export_manual": "Exportar Manual PDF",
+    "part_code": "Código",
+    "quantity_x": "{{qty}}×"
+  },
+  "furniture_types": {
+    "tv_unit": "Mueble TV",
+    "entertainment_center": "Centro de Entretenimiento",
+    "bookcase": "Librero"
+  },
+  "params_extra": {
+    "tv_niche_width": "Ancho nicho TV",
+    "tv_niche_height": "Alto nicho TV",
+    "side_column_width": "Ancho columna lateral",
+    "has_back_panel": "Panel posterior",
+    "back_panel_height": "Alto panel posterior",
+    "open_back": "Sin fondo"
   }
 }

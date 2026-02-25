@@ -7,6 +7,7 @@ import FurniturePanel from '@/ui/panels/FurniturePanel'
 import ParamsPanel from '@/ui/panels/ParamsPanel'
 import ModulesPanel from '@/ui/panels/ModulesPanel'
 import MaterialsPanel from '@/ui/panels/MaterialsPanel'
+import AssemblyPanel from '@/ui/panels/AssemblyPanel'
 
 interface LeftPanelProps {
   activeTab: ActiveTab
@@ -19,6 +20,7 @@ const TABS: { id: ActiveTab; icon: string; labelKey: string }[] = [
   { id: 'params',    icon: '⚙️', labelKey: 'nav.params'    },
   { id: 'modules',   icon: '📦', labelKey: 'nav.modules'   },
   { id: 'materials', icon: '🎨', labelKey: 'nav.materials' },
+  { id: 'assembly',  icon: '🔧', labelKey: 'nav.assembly'  },
 ]
 
 export default function LeftPanel({ activeTab, onTabChange }: LeftPanelProps) {
@@ -59,6 +61,7 @@ export default function LeftPanel({ activeTab, onTabChange }: LeftPanelProps) {
           {activeTab === 'params'    && <ParamsPanel />}
           {activeTab === 'modules'   && <ModulesPanel />}
           {activeTab === 'materials' && <MaterialsPanel />}
+          {activeTab === 'assembly'  && <AssemblyPanel />}
         </div>
       </div>
     </aside>

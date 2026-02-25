@@ -29,10 +29,14 @@ function getSocleHeight(params: ParamSet): number {
  * Retorna [x, y, z] en unidades de escena para un Part dado.
  * Origen del mueble: centro inferior (x=0, y=0, z=0 en local).
  * Convención: 1 unidad = 1 metro = 1000 mm
+ *
+ * @param part       - la pieza a posicionar
+ * @param unitIndex  - índice 0-based dentro de su Part (para quantity > 1)
+ * @param furniture  - mueble padre con params
  */
 export function partPosition(
   part: Part,
-  index: number,
+  unitIndex: number,
   furniture: Furniture,
 ): [number, number, number] {
   const { totalWidth, totalHeight, totalDepth, boardThickness } =
@@ -46,18 +50,19 @@ export function partPosition(
 
   const label = part.label.toLowerCase()
 
-  // Laterales (2 piezas) — se posicionan alternando izquierda/derecha
+  // ── Laterales (quantity=2) ────────────────────────────────
+  // unitIndex=0 → lado izquierdo, unitIndex=1 → lado derecho
   if (label.includes('lateral')) {
-    const side = index % 2 === 0 ? 1 : -1
-    return [side * (W / 2 - t / 2), H / 2, 0]
+    const x = unitIndex === 0 ? -(W / 2 - t / 2) : (W / 2 - t / 2)
+    return [x, H / 2, 0]
   }
 
-  // Tapa superior
+  // ── Tapa superior ─────────────────────────────────────────
   if (label.includes('tapa superior') || label.includes('tapa_superior')) {
     return [0, H - t / 2, 0]
   }
 
-  // Piso inferior
+  // ── Piso inferior ─────────────────────────────────────────
   if (
     label.includes('piso inferior') ||
     label.includes('piso_inferior') ||
@@ -66,7 +71,7 @@ export function partPosition(
     return [0, socleH + t / 2, 0]
   }
 
-  // Panel trasero / fondo
+  // ── Panel trasero / fondo ─────────────────────────────────
   if (
     label.includes('panel trasero') ||
     label.includes('fondo') ||
@@ -76,22 +81,27 @@ export function partPosition(
     return [0, H / 2, -(D / 2 - t / 2)]
   }
 
-  // Zócalo frontal
+  // ── Zócalo frontal ────────────────────────────────────────
   if (label.includes('zócalo') || label.includes('zocalo') || label.includes('socle')) {
     return [0, socleH / 2, D / 2]
   }
 
-  // Estante — distribuir uniformemente entre piso y tapa
+  // ── Estantes — distribución uniforme en Y ─────────────────
+  // Para quantity=N estantes: posiciones i=0..N-1
+  // y = socleH + t + (innerH - t) * i / (count - 1)  (cuando count > 1)
   if (label.includes('estante') || label.includes('shelf')) {
-    const usableH = H - socleH - t * 2  // espacio entre piso y tapa
-    const shelfCount = part.quantity > 0 ? part.quantity : 1
-    const step = usableH / (shelfCount + 1)
-    const shelfIndex = (index % shelfCount) + 1
-    const y = socleH + t + step * shelfIndex
+    const count = part.quantity > 0 ? part.quantity : 1
+    const innerH = H - socleH - t * 2  // espacio interior entre piso y tapa
+    let y: number
+    if (count === 1) {
+      y = socleH + t + innerH / 2
+    } else {
+      y = socleH + t + (innerH - t) * unitIndex / (count - 1)
+    }
     return [0, y, 0]
   }
 
-  // Frente cajón
+  // ── Frente cajón ──────────────────────────────────────────
   if (
     label.includes('frente') ||
     label.includes('cajón') ||
@@ -99,18 +109,17 @@ export function partPosition(
     label.includes('drawer front')
   ) {
     const drawerH = part.width / 1000
-    const y = socleH + t + drawerH / 2 + (index * drawerH)
+    const y = socleH + t + drawerH / 2 + unitIndex * drawerH
     return [0, y, D / 2]
   }
 
-  // Divisor vertical
+  // ── Divisor vertical ──────────────────────────────────────
   if (label.includes('divisor') || label.includes('divider')) {
-    // Intentar leer posición de moduleId o colocar centrado con offset
-    const offsetX = (index - 0.5) * (W / 4)
+    const offsetX = (unitIndex - (part.quantity - 1) / 2) * (W / (part.quantity + 1))
     return [offsetX, H / 2, 0]
   }
 
-  // Barra / hanging rail — posición en altura configurable
+  // ── Barra / hanging rail ──────────────────────────────────
   if (label.includes('barra') || label.includes('rail') || label.includes('hanging')) {
     const railH =
       (furniture.params as { hangingRailHeight?: number }).hangingRailHeight
@@ -118,7 +127,7 @@ export function partPosition(
     return [0, y, 0]
   }
 
-  // Encimera / countertop
+  // ── Encimera / countertop ─────────────────────────────────
   if (
     label.includes('encimera') ||
     label.includes('countertop') ||
@@ -128,7 +137,7 @@ export function partPosition(
   }
 
   // Fallback: centro con pequeño offset basado en índice para evitar z-fighting
-  const offset = (index * 0.005) % 0.05
+  const offset = (unitIndex * 0.005) % 0.05
   return [offset, H / 2 + offset, offset]
 }
 
@@ -182,4 +191,21 @@ export function partColor(part: Part): string {
   }
 
   return '#B0C4DE' // azul madera claro — por defecto
+}
+
+// ─── Detección de puertas ────────────────────────────────────
+
+export function isDoorPart(part: Part): boolean {
+  const label = part.label.toLowerCase()
+  return (
+    label.includes('puerta') ||
+    label.includes('door') ||
+    label.includes('corredero') ||
+    label.includes('sliding')
+  )
+}
+
+export function isSlidingDoor(part: Part): boolean {
+  const label = part.label.toLowerCase()
+  return label.includes('corredero') || label.includes('sliding')
 }

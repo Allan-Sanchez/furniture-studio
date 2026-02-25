@@ -8,7 +8,8 @@
     "furniture": "Furniture",
     "params": "Parameters",
     "modules": "Modules",
-    "materials": "Materials"
+    "materials": "Materials",
+    "assembly": "Assembly"
   },
   "actions": {
     "save": "Save",
@@ -36,7 +37,10 @@
     "types": {
       "wardrobe": "Wardrobe / Closet",
       "kitchen_base": "Kitchen Base Cabinet",
-      "kitchen_wall": "Kitchen Wall Cabinet"
+      "kitchen_wall": "Kitchen Wall Cabinet",
+      "tv_unit": "TV Unit",
+      "entertainment_center": "Entertainment Center",
+      "bookcase": "Bookcase"
     },
     "presets": "Presets",
     "select_type": "Select furniture type",
@@ -147,6 +151,7 @@
     "title": "Bill of Materials",
     "consolidated": "Consolidated",
     "by_furniture": "By furniture",
+    "code": "Code",
     "piece": "Part",
     "qty": "Qty.",
     "length": "Length",
@@ -215,5 +220,30 @@
     "export_blocked": "Fix errors before exporting",
     "save_no_name": "Project needs a name",
     "load_failed": "Could not load project"
+  },
+  "assembly": {
+    "title": "Assembly Guide",
+    "steps_count": "{{count}} steps",
+    "step": "Step {{number}}",
+    "parts_involved": "Parts involved",
+    "hardware_used": "Hardware required",
+    "no_steps": "Assembly steps are automatically generated when you add modules to the furniture.",
+    "no_furniture": "Select a furniture item to view its assembly guide.",
+    "export_manual": "Export Assembly PDF",
+    "part_code": "Code",
+    "quantity_x": "{{qty}}×"
+  },
+  "furniture_types": {
+    "tv_unit": "TV Unit",
+    "entertainment_center": "Entertainment Center",
+    "bookcase": "Bookcase"
+  },
+  "params_extra": {
+    "tv_niche_width": "TV niche width",
+    "tv_niche_height": "TV niche height",
+    "side_column_width": "Side column width",
+    "has_back_panel": "Back panel",
+    "back_panel_height": "Back panel height",
+    "open_back": "Open back"
   }
 }

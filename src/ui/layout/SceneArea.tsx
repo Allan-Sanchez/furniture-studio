@@ -1,7 +1,9 @@
-import { Suspense } from 'react'
+import { Suspense, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import Scene from '@/scene/Scene'
+import type { CenterCameraFn } from '@/scene/Scene'
 import { useProjectStore } from '@/store/projectStore'
+import { useUIStore } from '@/store/uiStore'
 
 interface SceneAreaProps {
   bottomHeight?: number
@@ -10,7 +12,15 @@ interface SceneAreaProps {
 export default function SceneArea(_props: SceneAreaProps) {
   const { t } = useTranslation()
   const { activeProject, activeFurnitureId } = useProjectStore()
+  const { showDoors, toggleDoors } = useUIStore()
   const project = activeProject()
+
+  // Referencia a la función de centrado expuesta por Scene
+  const centerCameraRef = useRef<CenterCameraFn>(() => {})
+
+  const handleCenterReady = useCallback((fn: CenterCameraFn) => {
+    centerCameraRef.current = fn
+  }, [])
 
   // Encontrar el mueble activo para mostrar sus dimensiones
   const activeFurniture = project?.furnitures.find(f => f.id === activeFurnitureId)
@@ -26,7 +36,7 @@ export default function SceneArea(_props: SceneAreaProps) {
           <div className="text-sm text-slate-400">Cargando visor 3D...</div>
         </div>
       }>
-        <Scene />
+        <Scene onCenterReady={handleCenterReady} />
       </Suspense>
 
       {/* ── Overlays superiores ── */}
@@ -63,8 +73,16 @@ export default function SceneArea(_props: SceneAreaProps) {
           <SceneButton label={t('scene.perspective')} onClick={() => {}} active />
         </div>
         <div className="flex gap-1 justify-end">
-          <SceneButton label={t('scene.center')} onClick={() => {}} />
-          <SceneButton label="🚪" onClick={() => {}} title={t('scene.doors_open')} />
+          <SceneButton
+            label={t('scene.center')}
+            onClick={() => centerCameraRef.current()}
+          />
+          <SceneButton
+            label="🚪"
+            onClick={toggleDoors}
+            title={showDoors ? t('scene.doors_open') : t('scene.doors_closed')}
+            active={showDoors}
+          />
         </div>
       </div>
 
