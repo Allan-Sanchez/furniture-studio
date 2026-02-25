@@ -1,5 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import type { BottomTab } from '@/App'
+import BOMPanel from '@/ui/panels/BOMPanel'
+import CutListPanel from '@/ui/panels/CutListPanel'
+import CostPanel from '@/ui/panels/CostPanel'
 
 interface BottomPanelProps {
   activeTab: BottomTab
@@ -59,37 +62,10 @@ export default function BottomPanel({ activeTab, onTabChange, height }: BottomPa
 
       {/* Contenido */}
       <div className="flex-1 overflow-auto p-3">
-        {activeTab === 'bom'     && <BOMPlaceholder />}
-        {activeTab === 'cutlist' && <CutListPlaceholder />}
-        {activeTab === 'cost'    && <CostPlaceholder />}
+        {activeTab === 'bom'     && <BOMPanel />}
+        {activeTab === 'cutlist' && <CutListPanel />}
+        {activeTab === 'cost'    && <CostPanel />}
       </div>
-    </div>
-  )
-}
-
-function BOMPlaceholder() {
-  const { t } = useTranslation()
-  return (
-    <div className="flex items-center justify-center h-full text-sm text-slate-400">
-      {t('bom.no_data')}
-    </div>
-  )
-}
-
-function CutListPlaceholder() {
-  const { t } = useTranslation()
-  return (
-    <div className="flex items-center justify-center h-full text-sm text-slate-400">
-      {t('bom.no_data')}
-    </div>
-  )
-}
-
-function CostPlaceholder() {
-  const { t } = useTranslation()
-  return (
-    <div className="flex items-center justify-center h-full text-sm text-slate-400">
-      {t('bom.no_data')}
     </div>
   )
 }

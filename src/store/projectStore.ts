@@ -1,7 +1,16 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Project, Furniture, FurnitureTypeId, Currency } from '@/engine/types'
+import type { Project, Furniture, FurnitureTypeId, Currency, FurnitureResult, WardrobeParams, MaterialMap, FinishMap } from '@/engine/types'
 import { generateId as genId } from '@/utils/generateId'
+import {
+  generateWardrobeParts,
+  inferWardrobeHardware,
+  generateBOM,
+  generateCutList,
+  calculateCost,
+} from '@/engine'
+import { MATERIALS } from '@/data/materials'
+import { FINISHES } from '@/data/finishes'
 
 interface ProjectStore {
   // Estado
@@ -26,6 +35,9 @@ interface ProjectStore {
   deleteFurniture: (id: string) => void
   setActiveFurniture: (id: string | null) => void
   activeFurnitureId: string | null
+
+  // Motor paramétrico
+  computeFurnitureResult: (furnitureId: string, materialMap?: MaterialMap, finishMap?: FinishMap) => void
 }
 
 export const useProjectStore = create<ProjectStore>()(
@@ -123,6 +135,8 @@ export const useProjectStore = create<ProjectStore>()(
           ),
           activeFurnitureId: furniture.id,
         }))
+        // Cálculo automático del resultado tras crear el mueble
+        get().computeFurnitureResult(furniture.id)
         return furniture
       },
 
@@ -141,6 +155,11 @@ export const useProjectStore = create<ProjectStore>()(
               : p
           ),
         }))
+        // Re-cálculo automático solo cuando cambian params o modules
+        // (no cuando el update ES el resultado calculado — evita bucle infinito)
+        if (updates.params !== undefined || updates.modules !== undefined) {
+          get().computeFurnitureResult(id)
+        }
       },
 
       duplicateFurniture: (id) => {
@@ -186,6 +205,48 @@ export const useProjectStore = create<ProjectStore>()(
 
       setActiveFurniture: (id) => {
         set({ activeFurnitureId: id })
+      },
+
+      computeFurnitureResult: (furnitureId, materialMap = MATERIALS, finishMap = FINISHES) => {
+        // 1. Encuentra el mueble en el proyecto activo
+        const furniture = get().activeProject()?.furnitures.find(f => f.id === furnitureId)
+        if (!furniture) return
+
+        // 2. Solo ropero en Fase 1
+        if (furniture.furnitureType !== 'wardrobe') return
+
+        // 3. Genera piezas
+        const parts = generateWardrobeParts(
+          furnitureId,
+          furniture.params as WardrobeParams,
+          furniture.modules,
+          materialMap,
+          'mdf_18',  // material por defecto
+          'raw',     // acabado por defecto
+        )
+
+        // 4. Infiere herrajes
+        const hardware = inferWardrobeHardware(
+          furnitureId,
+          furniture.params as WardrobeParams,
+          furniture.modules,
+        )
+
+        // 5. Genera BOM
+        const project = get().activeProject()!
+        const bom = generateBOM(furnitureId, parts, hardware, materialMap, finishMap)
+
+        // 6. Genera CutList
+        const cutList = generateCutList(furnitureId, parts, materialMap)
+
+        // 7. Calcula costo
+        const cost = calculateCost(furnitureId, bom, project.profitMargin)
+
+        // 8. Construye FurnitureResult
+        const result: FurnitureResult = { parts, bom, cutList, hardware, cost }
+
+        // 9. Actualiza el mueble en el store (sin triggear otro auto-cálculo)
+        get().updateFurniture(furnitureId, { result })
       },
     }),
     {

@@ -39,7 +39,15 @@
       "kitchen_wall": "Kitchen Wall Cabinet"
     },
     "presets": "Presets",
-    "select_type": "Select furniture type"
+    "select_type": "Select furniture type",
+    "no_project": "No active project. Create one in the Project tab.",
+    "no_furniture": "No furniture yet. Add one to get started.",
+    "add_furniture": "Add furniture",
+    "name_placeholder": "Furniture name",
+    "add_confirm": "Add",
+    "add_cancel": "Cancel",
+    "type_label": "Type",
+    "name_label": "Name"
   },
   "params": {
     "total_width": "Total width",
@@ -56,13 +64,21 @@
       "hinged": "Hinged",
       "sliding": "Sliding"
     },
-    "mm": "mm"
+    "hanging_rail_height": "Hanging rail height",
+    "furniture_type": "Furniture type",
+    "no_furniture": "Select a furniture item first.",
+    "mm": "mm",
+    "in_range": "In range"
   },
   "modules": {
     "title": "Internal modules",
     "add": "Add module",
     "available_space": "Available space",
     "used_space": "Used space",
+    "no_furniture": "Select a furniture item to view its modules.",
+    "no_modules": "No modules. Add one to get started.",
+    "order": "Order",
+    "params": "Parameters",
     "types": {
       "shelf": "Shelf",
       "drawer": "Drawer",
@@ -71,6 +87,47 @@
       "hanging_rail": "Hanging rail",
       "vertical_divider": "Vertical divider",
       "socle": "Socle"
+    },
+    "shelf": {
+      "count": "Shelf count",
+      "adjustable": "Adjustable",
+      "material_id": "Material ID"
+    },
+    "drawer": {
+      "height": "Height (mm)",
+      "slide_type": "Slide type",
+      "slide_types": {
+        "basic": "Basic",
+        "soft_close": "Soft close"
+      },
+      "front_material": "Front material",
+      "body_material": "Body material"
+    },
+    "hinged_door": {
+      "count": "Door count",
+      "open_direction": "Open direction",
+      "directions": {
+        "left": "Left",
+        "right": "Right",
+        "both": "Both"
+      },
+      "material_id": "Material ID",
+      "handle_type": "Handle type"
+    },
+    "sliding_door": {
+      "panel_count": "Panel count",
+      "material_id": "Material ID"
+    },
+    "hanging_rail": {
+      "height": "Vertical position (mm)"
+    },
+    "vertical_divider": {
+      "position": "Position from left (mm)",
+      "material_id": "Material ID"
+    },
+    "socle": {
+      "height": "Height (mm)",
+      "material_id": "Material ID"
     }
   },
   "materials": {
@@ -94,34 +151,48 @@
     "qty": "Qty.",
     "length": "Length",
     "width": "Width",
-    "thickness": "Thickness",
+    "thickness": "Thk.",
+    "area_sqm": "Area m²",
     "material": "Material",
     "finish": "Finish",
     "unit_price": "Unit price",
     "subtotal": "Subtotal",
     "hardware_section": "Hardware",
-    "no_data": "No data. Configure a furniture item first."
+    "description": "Description",
+    "total_materials": "Total materials",
+    "total_hardware": "Total hardware",
+    "grand_total": "TOTAL",
+    "no_data": "No data. Configure a furniture item first.",
+    "mode_toggle": "Mode"
   },
   "cutlist": {
     "title": "Cut List",
-    "label": "Label",
+    "label": "Code",
     "piece": "Part",
     "length": "Length",
     "width": "Width",
     "thickness": "Thk.",
     "qty": "Qty.",
+    "grain": "Grain",
     "material": "Material",
-    "sheets_needed": "Sheets needed",
-    "sheet_size": "Standard sheet 2440 × 1220 mm"
+    "sheets_needed": "sheets needed",
+    "sheet_size": "Standard sheet 2440 × 1220 mm",
+    "total_area": "Total area",
+    "no_data": "No data. Configure a furniture item first.",
+    "grain_along": "Along",
+    "grain_across": "Across",
+    "grain_any": "Any"
   },
   "cost": {
     "title": "Quote",
     "materials_cost": "Materials cost",
     "hardware_cost": "Hardware cost",
     "subtotal": "Subtotal",
-    "margin": "Margin",
+    "margin": "Margin (%)",
     "sale_price": "Suggested sale price",
-    "export_pdf": "Export PDF"
+    "export_pdf": "Export PDF",
+    "no_data": "No data. Configure a furniture item first.",
+    "currency": "Currency"
   },
   "scene": {
     "front": "Front",

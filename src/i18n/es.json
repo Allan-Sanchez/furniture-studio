@@ -39,7 +39,15 @@
       "kitchen_wall": "Gabinete Alto de Cocina"
     },
     "presets": "Presets",
-    "select_type": "Seleccionar tipo de mueble"
+    "select_type": "Seleccionar tipo de mueble",
+    "no_project": "No hay proyecto activo. Crea uno en la pestaña Proyecto.",
+    "no_furniture": "No hay muebles. Agrega uno para comenzar.",
+    "add_furniture": "Agregar mueble",
+    "name_placeholder": "Nombre del mueble",
+    "add_confirm": "Agregar",
+    "add_cancel": "Cancelar",
+    "type_label": "Tipo",
+    "name_label": "Nombre"
   },
   "params": {
     "total_width": "Ancho total",
@@ -56,13 +64,21 @@
       "hinged": "Abatible",
       "sliding": "Corrediza"
     },
-    "mm": "mm"
+    "hanging_rail_height": "Altura barra colgadora",
+    "furniture_type": "Tipo de mueble",
+    "no_furniture": "Selecciona un mueble primero.",
+    "mm": "mm",
+    "in_range": "En rango"
   },
   "modules": {
     "title": "Módulos internos",
     "add": "Agregar módulo",
     "available_space": "Espacio disponible",
     "used_space": "Espacio usado",
+    "no_furniture": "Selecciona un mueble para ver sus módulos.",
+    "no_modules": "Sin módulos. Agrega uno para comenzar.",
+    "order": "Orden",
+    "params": "Parámetros",
     "types": {
       "shelf": "Estante",
       "drawer": "Cajón",
@@ -71,6 +87,47 @@
       "hanging_rail": "Barra colgadora",
       "vertical_divider": "Divisor vertical",
       "socle": "Zócalo"
+    },
+    "shelf": {
+      "count": "Cantidad de estantes",
+      "adjustable": "Ajustable",
+      "material_id": "ID de material"
+    },
+    "drawer": {
+      "height": "Altura (mm)",
+      "slide_type": "Tipo de corredera",
+      "slide_types": {
+        "basic": "Básica",
+        "soft_close": "Cierre suave"
+      },
+      "front_material": "Material frente",
+      "body_material": "Material cuerpo"
+    },
+    "hinged_door": {
+      "count": "Cantidad de puertas",
+      "open_direction": "Dirección apertura",
+      "directions": {
+        "left": "Izquierda",
+        "right": "Derecha",
+        "both": "Ambas"
+      },
+      "material_id": "ID de material",
+      "handle_type": "Tipo de jaladera"
+    },
+    "sliding_door": {
+      "panel_count": "Cantidad de paneles",
+      "material_id": "ID de material"
+    },
+    "hanging_rail": {
+      "height": "Posición vertical (mm)"
+    },
+    "vertical_divider": {
+      "position": "Posición desde izquierda (mm)",
+      "material_id": "ID de material"
+    },
+    "socle": {
+      "height": "Altura (mm)",
+      "material_id": "ID de material"
     }
   },
   "materials": {
@@ -94,34 +151,48 @@
     "qty": "Cant.",
     "length": "Largo",
     "width": "Ancho",
-    "thickness": "Espesor",
+    "thickness": "Esp.",
+    "area_sqm": "Área m²",
     "material": "Material",
     "finish": "Acabado",
     "unit_price": "P. Unit.",
     "subtotal": "Subtotal",
     "hardware_section": "Herrajes",
-    "no_data": "Sin datos. Configura un mueble primero."
+    "description": "Descripción",
+    "total_materials": "Total materiales",
+    "total_hardware": "Total herrajes",
+    "grand_total": "TOTAL",
+    "no_data": "Sin datos. Configura un mueble primero.",
+    "mode_toggle": "Modo"
   },
   "cutlist": {
     "title": "Lista de cortes",
-    "label": "Etiqueta",
+    "label": "Código",
     "piece": "Pieza",
     "length": "Largo",
     "width": "Ancho",
     "thickness": "Esp.",
     "qty": "Cant.",
+    "grain": "Veta",
     "material": "Material",
-    "sheets_needed": "Tableros necesarios",
-    "sheet_size": "Tablero estándar 2440 × 1220 mm"
+    "sheets_needed": "tableros necesarios",
+    "sheet_size": "Tablero estándar 2440 × 1220 mm",
+    "total_area": "Área total",
+    "no_data": "Sin datos. Configura un mueble primero.",
+    "grain_along": "Paralela",
+    "grain_across": "Perpendicular",
+    "grain_any": "Indiferente"
   },
   "cost": {
     "title": "Cotización",
     "materials_cost": "Costo materiales",
     "hardware_cost": "Costo herrajes",
     "subtotal": "Subtotal",
-    "margin": "Margen",
+    "margin": "Margen (%)",
     "sale_price": "Precio de venta sugerido",
-    "export_pdf": "Exportar PDF"
+    "export_pdf": "Exportar PDF",
+    "no_data": "Sin datos. Configura un mueble primero.",
+    "currency": "Moneda"
   },
   "scene": {
     "front": "Frontal",

@@ -1,29 +1,27 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Grid, GizmoHelper, GizmoViewport } from '@react-three/drei'
 import { useProjectStore } from '@/store/projectStore'
+import FurnitureModel from './FurnitureModel'
 
-// Componente de prueba Fase 0: cubo reactivo al ancho del mueble activo
-function DemoBox() {
-  const { activeProject, activeFurnitureId } = useProjectStore()
-  const project = activeProject()
-  const furniture = project?.furnitures.find(f => f.id === activeFurnitureId)
+// ─── Contenido de la escena (dentro del Canvas) ───────────────
 
-  // Convertir mm a unidades de escena (1 unidad = 100mm)
-  const w = furniture
-    ? (furniture.params as { totalWidth: number }).totalWidth / 1000
-    : 1.2
-  const h = furniture
-    ? (furniture.params as { totalHeight: number }).totalHeight / 1000
-    : 2.4
-  const d = furniture
-    ? (furniture.params as { totalDepth: number }).totalDepth / 1000
-    : 0.6
+function SceneContent() {
+  const { activeFurnitures, activeFurnitureId, setActiveFurniture } =
+    useProjectStore()
+
+  const furnitures = activeFurnitures()
 
   return (
-    <mesh position={[0, h / 2, 0]} castShadow>
-      <boxGeometry args={[w, h, d]} />
-      <meshStandardMaterial color="#94a3b8" wireframe={false} />
-    </mesh>
+    <>
+      {furnitures.map(furniture => (
+        <FurnitureModel
+          key={furniture.id}
+          furniture={furniture}
+          isSelected={furniture.id === activeFurnitureId}
+          onClick={() => setActiveFurniture(furniture.id)}
+        />
+      ))}
+    </>
   )
 }
 
@@ -65,8 +63,8 @@ export default function Scene() {
         <shadowMaterial opacity={0.08} />
       </mesh>
 
-      {/* Modelo de prueba — Fase 0 */}
-      <DemoBox />
+      {/* Muebles del proyecto activo */}
+      <SceneContent />
 
       {/* Controles de cámara */}
       <OrbitControls
