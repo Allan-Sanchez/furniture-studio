@@ -1,13 +1,18 @@
+import { lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ActiveTab } from '@/App'
 
-// Placeholders — se reemplazarán en Fase 1 con los paneles reales
+// Paneles livianos — importados de forma estática (pequeños, siempre visibles)
 import ProjectPanel from '@/ui/panels/ProjectPanel'
 import FurniturePanel from '@/ui/panels/FurniturePanel'
 import ParamsPanel from '@/ui/panels/ParamsPanel'
-import ModulesPanel from '@/ui/panels/ModulesPanel'
-import MaterialsPanel from '@/ui/panels/MaterialsPanel'
-import AssemblyPanel from '@/ui/panels/AssemblyPanel'
+
+// Paneles pesados — lazy: solo se cargan al activar su tab
+const ModulesPanel  = lazy(() => import('@/ui/panels/ModulesPanel'))
+const MaterialsPanel = lazy(() => import('@/ui/panels/MaterialsPanel'))
+const AssemblyPanel  = lazy(() => import('@/ui/panels/AssemblyPanel'))
+
+const PanelFallback = <div className="p-4 text-sm text-gray-400">Cargando...</div>
 
 interface LeftPanelProps {
   activeTab: ActiveTab
@@ -59,9 +64,21 @@ export default function LeftPanel({ activeTab, onTabChange }: LeftPanelProps) {
           {activeTab === 'project'   && <ProjectPanel />}
           {activeTab === 'furniture' && <FurniturePanel />}
           {activeTab === 'params'    && <ParamsPanel />}
-          {activeTab === 'modules'   && <ModulesPanel />}
-          {activeTab === 'materials' && <MaterialsPanel />}
-          {activeTab === 'assembly'  && <AssemblyPanel />}
+          {activeTab === 'modules'   && (
+            <Suspense fallback={PanelFallback}>
+              <ModulesPanel />
+            </Suspense>
+          )}
+          {activeTab === 'materials' && (
+            <Suspense fallback={PanelFallback}>
+              <MaterialsPanel />
+            </Suspense>
+          )}
+          {activeTab === 'assembly'  && (
+            <Suspense fallback={PanelFallback}>
+              <AssemblyPanel />
+            </Suspense>
+          )}
         </div>
       </div>
     </aside>

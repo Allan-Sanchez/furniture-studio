@@ -6,15 +6,14 @@
 // posición local por explodeScale. El label (partCode o letra)
 // flota sobre cada pieza usando <Text> de @react-three/drei.
 //
-// TODO: Animación suave con @react-spring/three no está
-// instalada en este proyecto. Las piezas aparecen en su
-// posición final sin transición animada.
-// Para habilitarla: pnpm add @react-spring/three y descomentar
-// el bloque de useSpring en este archivo.
+// Animación suave con @react-spring/three: las piezas
+// interpolan entre posición normal y explosionada con spring.
 // ============================================================
 
 import { useMemo } from 'react'
 import { Text } from '@react-three/drei'
+// @ts-ignore — spring compat: @react-spring/three no expone tipos para r3f 9 perfectamente
+import { useSpring, animated } from '@react-spring/three'
 import type { Furniture, Part } from '@/engine/types'
 import { partPosition, partScale, partColor } from './FurnitureParts'
 
@@ -24,15 +23,18 @@ interface ExplodedViewProps {
   furniture: Furniture
   /** Factor de separación: 1.0 = posición normal, 2.0 = muy separado */
   explodeScale?: number
+  /** Si true, muestra las piezas en posición explosionada; si false, en posición normal */
+  exploded?: boolean
 }
 
-// ─── Pieza explosionada ──────────────────────────────────────
+// ─── Pieza explosionada con animación spring ─────────────────
 
 interface ExplodedPartProps {
   part: Part
   unitIndex: number
   furniture: Furniture
   explodeScale: number
+  exploded: boolean
 }
 
 function ExplodedPart({
@@ -40,27 +42,42 @@ function ExplodedPart({
   unitIndex,
   furniture,
   explodeScale,
+  exploded,
 }: ExplodedPartProps) {
   const basePosition = partPosition(part, unitIndex, furniture)
   const scale = partScale(part)
   const color = partColor(part)
 
-  // Offset explosionado: alejar del centro (origen = 0,0,0 del grupo)
-  // Multiplicamos la posición local por el factor de explosión.
+  // Posición normal (sin explosión)
+  const normalPos: [number, number, number] = basePosition
+
+  // Posición explosionada: alejar del centro multiplicando por factor
   // Para evitar que piezas en y=0 se hundan en el suelo, preservamos
   // la componente Y mínima (socle + medio de la pieza).
-  const ex = basePosition[0] * explodeScale
-  const ey = basePosition[1] * explodeScale
-  const ez = basePosition[2] * explodeScale
+  const explodedPos: [number, number, number] = [
+    basePosition[0] * explodeScale,
+    basePosition[1] * explodeScale,
+    basePosition[2] * explodeScale,
+  ]
+
+  // Spring: interpola suavemente entre posición normal y explosionada
+  // @ts-ignore — spring compat: useSpring tipado para r3f 9
+  const { position } = useSpring({
+    position: exploded ? explodedPos : normalPos,
+    config: { tension: 120, friction: 20 },
+  })
 
   // Etiqueta de la pieza: partCode preferido, sino primeras 2 letras del label
   const label = part.partCode ?? part.label.slice(0, 2).toUpperCase()
 
   // Posición del texto: encima del centro de la pieza + pequeño offset vertical
-  const textY = ey + scale[1] * 0.5 + 0.04
+  // Usamos el valor final (explodedPos o normalPos) para el label
+  const targetY = exploded ? explodedPos[1] : normalPos[1]
+  const textY = targetY + scale[1] * 0.5 + 0.04
 
   return (
-    <group position={[ex, ey, ez]}>
+    // @ts-ignore — spring compat: animated.group acepta position como SpringValue
+    <animated.group position={position}>
       {/* Mesh de la pieza */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[scale[0], scale[1], scale[2]]} />
@@ -86,7 +103,7 @@ function ExplodedPart({
 
       {/* Label flotante */}
       <Text
-        position={[0, textY - ey, 0]}
+        position={[0, textY - targetY, 0]}
         fontSize={0.07}
         color="#1e293b"
         anchorX="center"
@@ -95,7 +112,7 @@ function ExplodedPart({
       >
         {label}
       </Text>
-    </group>
+    </animated.group>
   )
 }
 
@@ -104,6 +121,7 @@ function ExplodedPart({
 export default function ExplodedView({
   furniture,
   explodeScale = 1.5,
+  exploded = true,
 }: ExplodedViewProps) {
   const { result } = furniture
 
@@ -140,6 +158,7 @@ export default function ExplodedView({
           unitIndex={unitIndex}
           furniture={furniture}
           explodeScale={explodeScale}
+          exploded={exploded}
         />
       ))}
     </group>

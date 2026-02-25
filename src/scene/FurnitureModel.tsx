@@ -8,6 +8,8 @@ import { useRef, useCallback, useMemo } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
+// @ts-ignore — spring compat: @react-spring/three no expone tipos para r3f 9 perfectamente
+import { useSpring, animated } from '@react-spring/three'
 import type { Furniture, Part } from '@/engine/types'
 import { useProjectStore } from '@/store/projectStore'
 import { useUIStore } from '@/store/uiStore'
@@ -34,38 +36,45 @@ interface PartMeshProps {
 }
 
 function PartMesh({ part, unitIndex, furniture, showDoorsOpen }: PartMeshProps) {
-  const position = partPosition(part, unitIndex, furniture)
+  const basePosition = partPosition(part, unitIndex, furniture)
   const scale = partScale(part)
   const color = partColor(part)
 
-  // ── Apertura de puertas ────────────────────────────────────
-  // TODO: implementar animación suave con useSpring cuando se añada react-spring
-  let rotationY = 0
-  let offsetX = 0
+  const isDoor = isDoorPart(part)
+  const isSlidingPart = isSlidingDoor(part)
 
-  if (isDoorPart(part) && showDoorsOpen) {
-    if (isSlidingDoor(part)) {
-      // Paneles correderos: desplazar en X según índice
-      const slideDir = unitIndex % 2 === 0 ? 1 : -1
-      offsetX = slideDir * (scale[0] * 0.8)
-    } else {
-      // Puertas abatibles: rotar 90° en Y
-      // unitIndex=0 → abre hacia la izquierda (positivo), unitIndex=1 → derecha (negativo)
-      rotationY = unitIndex % 2 === 0 ? Math.PI / 2 : -Math.PI / 2
-    }
-  }
+  // ── Animación spring: puertas abatibles (rotación Y) ──────
+  // @ts-ignore — spring compat
+  const { rotY } = useSpring({
+    rotY: isDoor && !isSlidingPart && showDoorsOpen
+      ? (unitIndex % 2 === 0 ? Math.PI / 2 : -Math.PI / 2)
+      : 0,
+    config: { tension: 180, friction: 24 },
+  })
+
+  // ── Animación spring: puertas correderas (desplazamiento X) ─
+  // @ts-ignore — spring compat
+  const { slideX } = useSpring({
+    slideX: isDoor && isSlidingPart && showDoorsOpen
+      ? (unitIndex % 2 === 0 ? 1 : -1) * (scale[0] * 0.8)
+      : 0,
+    config: { tension: 180, friction: 24 },
+  })
 
   return (
-    <mesh
-      position={[position[0] + offsetX, position[1], position[2]]}
-      rotation={[0, rotationY, 0]}
+    // @ts-ignore — spring compat: animated.mesh acepta SpringValues como props
+    <animated.mesh
+      position-x={slideX.to((ox: number) => basePosition[0] + ox)}
+      position-y={basePosition[1]}
+      position-z={basePosition[2]}
+      rotation-y={rotY}
       scale={scale}
       castShadow
       receiveShadow
     >
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={color} />
-    </mesh>
+    </animated.mesh>
   )
 }
 
@@ -96,14 +105,13 @@ export default function FurnitureModel({
   }, [params])
 
   // ── Posición global del mueble en la escena ───────────────
-  const groupPosition: [number, number, number] = [
-    position.x / 1000,
-    position.y / 1000,
-    position.z / 1000,
-  ]
+  const groupPosition = useMemo<[number, number, number]>(
+    () => [position.x / 1000, position.y / 1000, position.z / 1000],
+    [position.x, position.y, position.z],
+  )
 
   // ── Rotación en radianes ──────────────────────────────────
-  const rotationYRad = (rotationY * Math.PI) / 180
+  const rotationYRad = useMemo(() => (rotationY * Math.PI) / 180, [rotationY])
 
   // ── Estado de drag ────────────────────────────────────────
   const isDragging = useRef(false)

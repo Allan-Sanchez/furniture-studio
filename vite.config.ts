@@ -11,6 +11,23 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Three.js y r3f — siempre necesarios para el visor 3D
+          'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
+          // PDF — cargado solo cuando se genera un PDF
+          'pdf-vendor': ['@react-pdf/renderer'],
+          // React core
+          'react-vendor': ['react', 'react-dom'],
+          // Estado
+          'state-vendor': ['zustand'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },
   test: {
     globals: true,
     environment: 'jsdom',

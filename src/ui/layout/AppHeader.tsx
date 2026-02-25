@@ -3,9 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useProjectStore } from '@/store/projectStore'
 import { exportBOMAsCSV } from '@/services/exportCSV'
 import { exportAllProjectsAsJSON } from '@/services/storage'
-import { generateQuotePDF } from '@/services/pdfQuote'
-import { generateCutListPDF } from '@/services/pdfCutList'
-import { generateAssemblyPDF } from '@/services/pdfAssembly'
 
 interface AppHeaderProps {
   onToggleLanguage: () => void
@@ -80,22 +77,25 @@ export default function AppHeader({ onToggleLanguage }: AppHeaderProps) {
   }, [handleExport])
 
   const handleExportPDFQuote = useCallback(() => {
-    handleExport(() => {
+    handleExport(async () => {
       if (!project) return
+      const { generateQuotePDF } = await import('@/services/pdfQuote')
       return generateQuotePDF(project)
     })
   }, [project, handleExport])
 
   const handleExportPDFCutList = useCallback(() => {
-    handleExport(() => {
+    handleExport(async () => {
       if (!project) return
+      const { generateCutListPDF } = await import('@/services/pdfCutList')
       return generateCutListPDF(project)
     })
   }, [project, handleExport])
 
   const handleExportPDFAssembly = useCallback(() => {
-    handleExport(() => {
+    handleExport(async () => {
       if (!project || !activeFurnitureId) return
+      const { generateAssemblyPDF } = await import('@/services/pdfAssembly')
       return generateAssemblyPDF(project, activeFurnitureId)
     })
   }, [project, activeFurnitureId, handleExport])

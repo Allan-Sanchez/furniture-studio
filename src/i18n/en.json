@@ -157,6 +157,16 @@
       "hdf": "HDF"
     }
   },
+  "materials_panel": {
+    "title": "Materials",
+    "global_material": "Global material",
+    "global_finish": "Global finish",
+    "apply_all": "Apply to all pieces",
+    "pieces": "Pieces",
+    "no_furniture": "Select a furniture item to view its pieces",
+    "material": "Material",
+    "finish": "Finish"
+  },
   "bom": {
     "title": "Bill of Materials",
     "consolidated": "Consolidated",
